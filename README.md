@@ -2,7 +2,7 @@
 
 Read these files before coding:
 
-1. AGENTS.md
+1. .codex/AGENTS.md
 2. docs/PRD.md
 3. docs/API_CONTRACT.md
 4. docs/DATABASE.md
