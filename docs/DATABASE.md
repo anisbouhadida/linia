@@ -139,13 +139,21 @@ enum TaskStatus {
   FAILED
 }
 
-enum AuditAction {
-  RUN_CREATED
+enum RunStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED
+}
+
+enum AuditEventType {
+  RUN_LAUNCHED
   TASK_READY
   TASK_STARTED
   TASK_COMPLETED
   TASK_FAILED
   EVIDENCE_ADDED
+  RUN_COMPLETED
+  RUN_ABORTED
 }
 ```
 
@@ -171,13 +179,21 @@ enum TaskStatus {
   FAILED
 }
 
-enum AuditAction {
-  RUN_CREATED
+enum RunStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED
+}
+
+enum AuditEventType {
+  RUN_LAUNCHED
   TASK_READY
   TASK_STARTED
   TASK_COMPLETED
   TASK_FAILED
   EVIDENCE_ADDED
+  RUN_COMPLETED
+  RUN_ABORTED
 }
 
 model User {
@@ -254,6 +270,7 @@ model Run {
   id          String    @id @default(uuid())
   templateId  String
   name        String
+  status      RunStatus @default(ACTIVE)
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -280,6 +297,7 @@ model RunTask {
   orderIndex       Int
   requiresEvidence Boolean    @default(false)
   status           TaskStatus @default(BLOCKED)
+  version          Int        @default(0)
   startedAt        DateTime?
   completedAt      DateTime?
   failedAt         DateTime?
@@ -337,7 +355,7 @@ model AuditEntry {
   runId       String
   runTaskId   String?
   actorId     String?
-  action      AuditAction
+  action      AuditEventType
   fromStatus  TaskStatus?
   toStatus    TaskStatus?
   message     String?
@@ -471,6 +489,7 @@ A run must preserve the task and dependency graph from the moment it was launche
 | `id` | `String` | UUID primary key. |
 | `templateId` | `String` | Original template. |
 | `name` | `String` | Run name. |
+| `status` | `RunStatus` | Current run lifecycle state. |
 | `startedAt` | `DateTime` | Launch timestamp. |
 | `completedAt` | `DateTime?` | Optional completion timestamp. |
 | `createdAt` | `DateTime` | Creation timestamp. |
@@ -499,6 +518,7 @@ Run tasks are the source of truth during execution.
 | `orderIndex` | `Int` | Copied order. |
 | `requiresEvidence` | `Boolean` | Copied evidence requirement. |
 | `status` | `TaskStatus` | Current execution status. |
+| `version` | `Int` | Monotonic version for stale-write protection. |
 | `startedAt` | `DateTime?` | Set when task starts. |
 | `completedAt` | `DateTime?` | Set when task completes. |
 | `failedAt` | `DateTime?` | Set when task fails. |
@@ -571,12 +591,20 @@ Audit entries are append-only.
 | `runId` | `String` | Parent run. |
 | `runTaskId` | `String?` | Related task, if any. |
 | `actorId` | `String?` | User who performed the action. |
-| `action` | `AuditAction` | Event type. |
+| `action` | `AuditEventType` | Event type. |
 | `fromStatus` | `TaskStatus?` | Previous status, if relevant. |
 | `toStatus` | `TaskStatus?` | New status, if relevant. |
 | `message` | `String?` | Human-readable event summary. |
 | `metadata` | `Json?` | Additional structured details. |
 | `createdAt` | `DateTime` | Event timestamp. |
+
+### 7.4 RunStatus
+
+| Status | Meaning |
+| --- | --- |
+| `ACTIVE` | The run is in progress and can accept task actions. |
+| `COMPLETED` | All work is finished successfully. |
+| `ABORTED` | The run was stopped before successful completion. |
 
 ---
 
@@ -636,11 +664,13 @@ NestJS services enforce business behavior.
 
 ### 8.3 Audit Rules
 
-- Creating a run writes `RUN_CREATED`.
+- Creating a run writes `RUN_LAUNCHED`.
 - Starting a task writes `TASK_STARTED`.
 - Adding evidence writes `EVIDENCE_ADDED`.
 - Completing a task writes `TASK_COMPLETED`.
 - Failing a task writes `TASK_FAILED`.
+- Completing a run writes `RUN_COMPLETED`.
+- Aborting a run writes `RUN_ABORTED`.
 - Unlocking a downstream task may write `TASK_READY`.
 
 ---
@@ -807,7 +837,7 @@ The `POST /runs` transaction must:
 3. Copy `TemplateTask` rows into `RunTask`.
 4. Copy `TemplateDependency` rows into `RunTaskDependency`.
 5. Recalculate initial statuses.
-6. Write `RUN_CREATED` audit entry.
+6. Write `RUN_LAUNCHED` audit entry.
 7. Return run details.
 
 ### 13.2 Start Task Transaction

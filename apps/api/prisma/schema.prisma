@@ -20,13 +20,21 @@ enum TaskStatus {
   FAILED
 }
 
-enum AuditAction {
-  RUN_CREATED
+enum RunStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED
+}
+
+enum AuditEventType {
+  RUN_LAUNCHED
+  TASK_READY
   TASK_STARTED
   TASK_COMPLETED
   TASK_FAILED
   EVIDENCE_ADDED
-  TASK_UNLOCKED
+  RUN_COMPLETED
+  RUN_ABORTED
 }
 
 model User {
@@ -35,18 +43,20 @@ model User {
   passwordHash String
   displayName  String
   createdAt    DateTime     @default(now())
+  evidence     Evidence[]
   auditEntries AuditEntry[]
 }
 
 model Template {
-  id          String         @id @default(uuid())
-  name        String
-  description String?
-  version     Int            @default(1)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  tasks       TemplateTask[]
-  runs        Run[]
+  id           String               @id @default(uuid())
+  name         String
+  description  String?
+  version      Int                  @default(1)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  tasks        TemplateTask[]
+  dependencies TemplateDependency[]
+  runs         Run[]
 }
 
 model TemplateTask {
@@ -63,8 +73,10 @@ model TemplateTask {
   template     Template             @relation(fields: [templateId], references: [id], onDelete: Cascade)
   dependencies TemplateDependency[] @relation("TaskDependencies")
   dependents   TemplateDependency[] @relation("TaskDependents")
+  runTasks     RunTask[]
 
   @@unique([templateId, externalId])
+  @@unique([templateId, orderIndex])
   @@index([templateId, orderIndex])
 }
 
@@ -74,22 +86,28 @@ model TemplateDependency {
   taskId          String
   dependsOnTaskId String
 
+  template      Template     @relation(fields: [templateId], references: [id], onDelete: Cascade)
   task          TemplateTask @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
   dependsOnTask TemplateTask @relation("TaskDependents", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, dependsOnTaskId])
+  @@index([templateId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
 }
 
 model Run {
   id          String    @id @default(uuid())
   templateId  String
   name        String
+  status      RunStatus @default(ACTIVE)
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  template     Template     @relation(fields: [templateId], references: [id])
+  template     Template            @relation(fields: [templateId], references: [id])
   tasks        RunTask[]
+  dependencies RunTaskDependency[]
   auditEntries AuditEntry[]
 }
 
@@ -105,17 +123,23 @@ model RunTask {
   orderIndex       Int
   requiresEvidence Boolean    @default(false)
   status           TaskStatus @default(BLOCKED)
+  version          Int        @default(0)
   startedAt        DateTime?
   completedAt      DateTime?
+  failedAt         DateTime?
 
   run          Run                 @relation(fields: [runId], references: [id], onDelete: Cascade)
+  templateTask TemplateTask?       @relation(fields: [templateTaskId], references: [id], onDelete: SetNull)
   evidence     Evidence[]
   dependencies RunTaskDependency[] @relation("RunTaskDependencies")
   dependents   RunTaskDependency[] @relation("RunTaskDependents")
+  auditEntries AuditEntry[]
 
   @@unique([runId, externalId])
+  @@unique([runId, orderIndex])
   @@index([runId, status])
   @@index([runId, orderIndex])
+  @@index([templateTaskId])
 }
 
 model RunTaskDependency {
@@ -124,10 +148,14 @@ model RunTaskDependency {
   taskId          String
   dependsOnTaskId String
 
+  run           Run     @relation(fields: [runId], references: [id], onDelete: Cascade)
   task          RunTask @relation("RunTaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
   dependsOnTask RunTask @relation("RunTaskDependents", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, dependsOnTaskId])
+  @@index([runId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
 }
 
 model Evidence {
@@ -137,26 +165,31 @@ model Evidence {
   createdById String
   createdAt   DateTime @default(now())
 
-  runTask RunTask @relation(fields: [runTaskId], references: [id], onDelete: Cascade)
+  runTask   RunTask @relation(fields: [runTaskId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
-  @@index([runTaskId])
+  @@index([runTaskId, createdAt])
+  @@index([createdById])
 }
 
 model AuditEntry {
-  id         String      @id @default(uuid())
+  id         String         @id @default(uuid())
   runId      String
   runTaskId  String?
   actorId    String?
-  action     AuditAction
+  action     AuditEventType
   fromStatus TaskStatus?
   toStatus   TaskStatus?
   message    String?
   metadata   Json?
-  createdAt  DateTime    @default(now())
+  createdAt  DateTime       @default(now())
 
-  run   Run   @relation(fields: [runId], references: [id], onDelete: Restrict)
-  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  run     Run      @relation(fields: [runId], references: [id], onDelete: Restrict)
+  runTask RunTask? @relation(fields: [runTaskId], references: [id], onDelete: SetNull)
+  actor   User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([runId, createdAt])
-  @@index([runTaskId])
+  @@index([runTaskId, createdAt])
+  @@index([actorId])
+  @@index([action, createdAt])
 }
