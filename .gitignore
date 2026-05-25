@@ -1,0 +1,14 @@
+node_modules
+dist
+.angular
+coverage
+.env
+.env.local
+.env.*.local
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+postgres_data
+playwright-report
+test-results

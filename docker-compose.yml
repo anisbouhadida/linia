@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: linia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: linia
+      POSTGRES_PASSWORD: linia_password
+      POSTGRES_DB: linia
+    ports:
+      - "5432:5432"
+    volumes:
+      - linia_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  linia_postgres_data:

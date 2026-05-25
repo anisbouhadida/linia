@@ -1,0 +1,16 @@
+{
+  "name": "@linia/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "echo 'shared lint placeholder'",
+    "test": "echo 'shared test placeholder'"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
