@@ -1460,13 +1460,13 @@ DELETE /audit/:auditEntryId
 
 Before asking AI to generate NestJS services or Angular components, confirm this API contract and the Prisma schema draft are finalized.
 
-- [ ] Authentication contract confirmed.
-- [ ] Template endpoints confirmed.
-- [ ] CSV text import contract confirmed.
-- [ ] Run launch contract confirmed.
-- [ ] Run board contract confirmed.
-- [ ] Task transition contract confirmed.
-- [ ] Text evidence contract confirmed.
-- [ ] Audit contract confirmed.
-- [ ] Error format confirmed.
-- [ ] Prisma schema draft aligned with this contract.
+- [X] Authentication contract confirmed.
+- [X] Template endpoints confirmed.
+- [X] CSV text import contract confirmed.
+- [X] Run launch contract confirmed.
+- [X] Run board contract confirmed.
+- [X] Task transition contract confirmed.
+- [X] Text evidence contract confirmed.
+- [X] Audit contract confirmed.
+- [X] Error format confirmed.
+- [X] Prisma schema draft aligned with this contract.
