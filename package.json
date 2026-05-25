@@ -13,6 +13,7 @@
     "db:down": "docker compose down",
     "prisma:generate": "pnpm --filter api prisma generate",
     "prisma:migrate": "pnpm --filter api prisma migrate dev",
+    "prisma:seed": "pnpm --filter api db:seed",
     "prisma:studio": "pnpm --filter api prisma studio"
   },
   "devDependencies": {

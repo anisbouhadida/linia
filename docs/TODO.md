@@ -47,15 +47,15 @@ Strict exclusions:
   - [X] `Template`
   - [X] `TemplateTask`
 - [X] Generate the first Prisma migration.
-- [ ] Add a seed script for the initial admin user.
-- [ ] Verify local database startup and Prisma connection.
+- [X] Add a seed script for the initial admin user.
+- [X] Verify local database startup and Prisma connection.
 
 **Acceptance criteria:**
 
 - [ ] `pnpm install` succeeds.
-- [ ] Local PostgreSQL starts with Docker.
-- [ ] Prisma migration runs successfully.
-- [ ] Seed admin user is created.
+- [X] Local PostgreSQL starts with Docker.
+- [X] Prisma migration runs successfully.
+- [X] Seed admin user is created.
 - [ ] API and web apps can start locally.
 
 ---
@@ -63,7 +63,7 @@ Strict exclusions:
 ### Week 2 — Authentication
 
 - [ ] Implement NestJS local session-based authentication using Passport.
-- [ ] Create a single seeded admin/operator account.
+- [X] Create a single seeded admin/operator account.
 - [ ] Add login endpoint.
 - [ ] Add logout endpoint.
 - [ ] Add current-user endpoint: `GET /auth/me`.
