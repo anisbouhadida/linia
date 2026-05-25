@@ -1,0 +1,86 @@
+$linia-surface: #031427;
+$linia-surface-container-lowest: #000f21;
+$linia-surface-container-low: #0b1c30;
+$linia-surface-container: #102034;
+$linia-surface-container-high: #1b2b3f;
+$linia-surface-container-highest: #26364a;
+
+$linia-on-surface: #d3e4fe;
+$linia-on-surface-variant: #c1c6d7;
+$linia-outline: #8b90a0;
+$linia-outline-variant: #414755;
+
+$linia-primary: #adc6ff;
+$linia-primary-strong: #4b8eff;
+$linia-secondary: #4edea3;
+$linia-tertiary: #ffb95f;
+$linia-error: #ffb4ab;
+
+$body-bg: $linia-surface;
+$body-color: $linia-on-surface;
+
+$font-family-sans-serif: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+$font-family-monospace: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+$primary: $linia-primary;
+$secondary: $linia-secondary;
+$success: $linia-secondary;
+$warning: $linia-tertiary;
+$danger: $linia-error;
+$dark: $linia-surface-container-lowest;
+$light: $linia-on-surface;
+
+$border-color: $linia-outline-variant;
+$border-radius: 0.25rem;
+$border-radius-sm: 0.125rem;
+$border-radius-lg: 0.375rem;
+
+$card-bg: $linia-surface-container-low;
+$card-border-color: $linia-outline-variant;
+$card-cap-bg: $linia-surface-container;
+
+$table-bg: transparent;
+$table-color: $linia-on-surface;
+$table-border-color: $linia-outline-variant;
+
+$input-bg: $linia-surface-container-low;
+$input-color: $linia-on-surface;
+$input-border-color: $linia-outline-variant;
+$input-focus-border-color: $linia-primary;
+$input-placeholder-color: $linia-on-surface-variant;
+
+@import "bootstrap/scss/bootstrap";
+
+[data-bs-theme="linia"] {
+  --bs-body-bg: #{$linia-surface};
+  --bs-body-color: #{$linia-on-surface};
+  --bs-border-color: #{$linia-outline-variant};
+  --bs-primary: #{$linia-primary};
+  --bs-primary-rgb: 173, 198, 255;
+  --bs-secondary: #{$linia-secondary};
+  --bs-secondary-rgb: 78, 222, 163;
+  --bs-success: #{$linia-secondary};
+  --bs-success-rgb: 78, 222, 163;
+  --bs-warning: #{$linia-tertiary};
+  --bs-warning-rgb: 255, 185, 95;
+  --bs-danger: #{$linia-error};
+  --bs-danger-rgb: 255, 180, 171;
+  --bs-light: #{$linia-on-surface};
+  --bs-light-rgb: 211, 228, 254;
+  --bs-dark: #{$linia-surface-container-lowest};
+  --bs-dark-rgb: 0, 15, 33;
+  --bs-tertiary-bg: #{$linia-surface-container};
+  --bs-secondary-bg: #{$linia-surface-container-low};
+  --bs-emphasis-color: #{$linia-on-surface};
+  --bs-secondary-color: #{$linia-on-surface-variant};
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background-color: $linia-surface;
+  color: $linia-on-surface;
+}
