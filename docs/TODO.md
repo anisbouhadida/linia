@@ -52,11 +52,11 @@ Strict exclusions:
 
 **Acceptance criteria:**
 
-- [ ] `pnpm install` succeeds.
+- [X] `pnpm install` succeeds.
 - [X] Local PostgreSQL starts with Docker.
 - [X] Prisma migration runs successfully.
 - [X] Seed admin user is created.
-- [ ] API and web apps can start locally.
+- [X] API and web apps can start locally.
 
 ---
 
