@@ -32,21 +32,21 @@ Strict exclusions:
 
 ### Week 1 — Monorepo and Database Foundation
 
-- [ ] Initialize the monorepo using `pnpm workspaces`.
-- [ ] Create `apps/api` for the NestJS backend.
-- [ ] Create `apps/web` for the Angular standalone frontend.
-- [ ] Install Bootstrap 5.3 and Bootstrap Icons in the Angular app, create the Linia Bootstrap Sass theme entrypoint, and configure `data-bs-theme="linia"` in `index.html`.
-- [ ] Create `packages/shared` for shared TypeScript enums, DTO types, and constants.
-- [ ] Add root-level scripts for install, lint, test, build, and dev.
-- [ ] Add `.env.example`.
-- [ ] Add base `README.md`.
-- [ ] Initialize PostgreSQL via Docker Compose for local development.
-- [ ] Install and configure Prisma in `apps/api`.
-- [ ] Create initial Prisma schema models:
-  - [ ] `User`
-  - [ ] `Template`
-  - [ ] `TemplateTask`
-- [ ] Generate the first Prisma migration.
+- [X] Initialize the monorepo using `pnpm workspaces`.
+- [X] Create `apps/api` for the NestJS backend.
+- [X] Create `apps/web` for the Angular standalone frontend.
+- [X] Install Bootstrap 5.3 and Bootstrap Icons in the Angular app, create the Linia Bootstrap Sass theme entrypoint, and configure `data-bs-theme="linia"` in `index.html`.
+- [X] Create `packages/shared` for shared TypeScript enums, DTO types, and constants.
+- [X] Add root-level scripts for install, lint, test, build, and dev.
+- [X] Add `.env.example`.
+- [X] Add base `README.md`.
+- [X] Initialize PostgreSQL via Docker Compose for local development.
+- [X] Install and configure Prisma in `apps/api`.
+- [X] Create initial Prisma schema models:
+  - [X] `User`
+  - [X] `Template`
+  - [X] `TemplateTask`
+- [X] Generate the first Prisma migration.
 - [ ] Add a seed script for the initial admin user.
 - [ ] Verify local database startup and Prisma connection.
 
