@@ -122,7 +122,6 @@ export class PlanningPage implements OnInit {
         description: formValue.description,
         owner: formValue.owner,
         estimatedMinutes,
-        orderIndex: template.tasks.length,
         requiresEvidence: formValue.requiresEvidence,
       });
       this.appendTask(task);

@@ -190,7 +190,6 @@ describe('PlanningPage', () => {
       description: '',
       owner: '',
       estimatedMinutes: undefined,
-      orderIndex: 0,
       requiresEvidence: false,
     });
     expect(
