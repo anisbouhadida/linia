@@ -16,6 +16,10 @@ describe('LocalAuthGuard', () => {
   it('regenerates the session before logging in the authenticated user', async () => {
     const events: string[] = [];
     const request = {
+      body: {
+        email: 'admin@example.com',
+        password: 'change-me',
+      },
       session: {
         regenerate: jest.fn((callback: (error?: Error) => void) => {
           events.push('regenerate');
@@ -31,8 +35,9 @@ describe('LocalAuthGuard', () => {
     jest.spyOn(authGuardPrototype, 'canActivate').mockResolvedValue(true);
     const logInSpy = jest
       .spyOn(authGuardPrototype, 'logIn')
-      .mockImplementation(async () => {
+      .mockImplementation(() => {
         events.push('login');
+        return Promise.resolve();
       });
 
     await expect(new LocalAuthGuard().canActivate(context)).resolves.toBe(true);
