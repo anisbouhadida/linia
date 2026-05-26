@@ -62,13 +62,13 @@ Strict exclusions:
 
 ### Week 2 — Authentication
 
-- [ ] Implement NestJS local session-based authentication using Passport.
+- [X] Implement NestJS local session-based authentication using Passport.
 - [X] Create a single seeded admin/operator account.
-- [ ] Add login endpoint.
-- [ ] Add logout endpoint.
-- [ ] Add current-user endpoint: `GET /auth/me`.
-- [ ] Add session middleware and secure cookie configuration.
-- [ ] Add backend auth guard.
+- [X] Add login endpoint.
+- [X] Add logout endpoint.
+- [X] Add current-user endpoint: `GET /auth/me`.
+- [X] Add session middleware and secure cookie configuration.
+- [X] Add backend auth guard.
 - [ ] Build Angular `LoginPage`.
 - [ ] Add Angular auth service.
 - [ ] Add Angular route guard for protected pages.
