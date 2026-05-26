@@ -53,7 +53,9 @@ $input-placeholder-color: $linia-on-surface-variant;
 
 [data-bs-theme="linia"] {
   --bs-body-bg: #{$linia-surface};
+  --bs-body-bg-rgb: 3, 20, 39;
   --bs-body-color: #{$linia-on-surface};
+  --bs-body-color-rgb: 211, 228, 254;
   --bs-border-color: #{$linia-outline-variant};
   --bs-primary: #{$linia-primary};
   --bs-primary-rgb: 173, 198, 255;
@@ -70,9 +72,15 @@ $input-placeholder-color: $linia-on-surface-variant;
   --bs-dark: #{$linia-surface-container-lowest};
   --bs-dark-rgb: 0, 15, 33;
   --bs-tertiary-bg: #{$linia-surface-container};
+  --bs-tertiary-bg-rgb: 16, 32, 52;
   --bs-secondary-bg: #{$linia-surface-container-low};
+  --bs-secondary-bg-rgb: 11, 28, 48;
   --bs-emphasis-color: #{$linia-on-surface};
+  --bs-emphasis-color-rgb: 211, 228, 254;
   --bs-secondary-color: #{$linia-on-surface-variant};
+  --bs-secondary-color-rgb: 193, 198, 215;
+  --bs-tertiary-color: #{$linia-on-surface-variant};
+  --bs-tertiary-color-rgb: 193, 198, 215;
 }
 
 html,

@@ -1,14 +1,20 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import type { TemplateSummaryDto } from '@linia/shared';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterLink, RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = signal('web');
-  protected readonly templates = signal<TemplateSummaryDto[]>([]);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  protected readonly currentUser = this.auth.currentUser;
+
+  protected async logout(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login');
+  }
 }

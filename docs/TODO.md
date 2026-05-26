@@ -69,19 +69,19 @@ Strict exclusions:
 - [X] Add current-user endpoint: `GET /auth/me`.
 - [X] Add session middleware and secure cookie configuration.
 - [X] Add backend auth guard.
-- [ ] Build Angular `LoginPage`.
-- [ ] Add Angular auth service.
-- [ ] Add Angular route guard for protected pages.
-- [ ] Add Angular functional interceptor to attach credentials.
-- [ ] Add basic authenticated app layout.
+- [X] Build Angular `LoginPage`.
+- [X] Add Angular auth service.
+- [X] Add Angular route guard for protected pages.
+- [X] Add Angular functional interceptor to attach credentials.
+- [X] Add basic authenticated app layout.
 
 **Acceptance criteria:**
 
-- [ ] Admin can log in.
-- [ ] Admin can log out.
-- [ ] Protected Angular routes redirect unauthenticated users.
-- [ ] `GET /auth/me` returns the current user after login.
-- [ ] No public signup exists.
+- [X] Admin can log in.
+- [X] Admin can log out.
+- [X] Protected Angular routes redirect unauthenticated users.
+- [X] `GET /auth/me` returns the current user after login.
+- [X] No public signup exists.
 
 ---
 
