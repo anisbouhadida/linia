@@ -1,9 +1,6 @@
-import {
-  UnprocessableEntityException,
-  ValidationError,
-  ValidationPipe,
-} from '@nestjs/common';
+import { UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
 import type { ApiErrorDetail } from '@linia/shared';
+import type { ValidationError } from 'class-validator';
 
 export function createApiValidationPipe(): ValidationPipe {
   return new ValidationPipe({
