@@ -84,6 +84,41 @@ describe('LoginPage', () => {
     );
   });
 
+  it('keeps the generic invalid-credentials message for 401 login failures', async () => {
+    auth.login.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 401,
+        error: {
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'Session expired',
+            details: [],
+          },
+        },
+      }),
+    );
+
+    const email = fixture.nativeElement.querySelector(
+      'input[type="email"]',
+    ) as HTMLInputElement;
+    const password = fixture.nativeElement.querySelector(
+      'input[type="password"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    email.value = 'admin@example.com';
+    email.dispatchEvent(new Event('input'));
+    password.value = 'change-me';
+    password.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Invalid email or password');
+    expect(fixture.nativeElement.textContent).not.toContain('Session expired');
+  });
+
   it('shows backend validation details when login payload is rejected', async () => {
     auth.login.mockRejectedValue(
       new HttpErrorResponse({
