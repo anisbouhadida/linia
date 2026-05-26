@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { ApiExceptionFilter } from './api-errors/api-exception.filter';
+import { createApiValidationPipe } from './api-errors/api-validation.pipe';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +21,16 @@ import { TemplatesModule } from './templates/templates.module';
     TemplatesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: ApiExceptionFilter,
+    },
+    {
+      provide: APP_PIPE,
+      useFactory: createApiValidationPipe,
+    },
+  ],
 })
 export class AppModule {}
