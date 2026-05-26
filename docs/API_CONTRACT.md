@@ -94,6 +94,12 @@ The API uses an HTTP-only session cookie.
 
 Angular must send credentials with API requests.
 
+Production deployments must use a persistent session store. Set
+`SESSION_STORE_DRIVER=postgres` and `SESSION_STORE_DATABASE_URL` to a shared
+PostgreSQL database connection string. Local development defaults to the
+in-memory store; production startup fails if the persistent store is not
+configured.
+
 Example Angular expectation:
 
 ```ts
