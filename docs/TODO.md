@@ -87,24 +87,24 @@ Strict exclusions:
 
 ### Week 3 — Template and Task CRUD
 
-- [ ] Build backend CRUD endpoints for templates.
-- [ ] Build backend CRUD endpoints for template tasks.
-- [ ] Add DTO validation for template and task inputs.
-- [ ] Enforce server-side validation for required fields.
-- [ ] Build Angular `PlanningPage`.
-- [ ] Add template list UI.
-- [ ] Add create-template form.
-- [ ] Add manual task creation form.
-- [ ] Add editable task table for a selected template.
-- [ ] Add basic empty/loading/error states.
+- [X] Build backend CRUD endpoints for templates.
+- [X] Build backend CRUD endpoints for template tasks.
+- [X] Add DTO validation for template and task inputs.
+- [X] Enforce server-side validation for required fields.
+- [X] Build Angular `PlanningPage`.
+- [X] Add template list UI.
+- [X] Add create-template form.
+- [X] Add manual task creation form.
+- [X] Add editable task table for a selected template.
+- [X] Add basic empty/loading/error states.
 
 **Acceptance criteria:**
 
-- [ ] Admin can create a template.
-- [ ] Admin can add tasks manually.
-- [ ] Tasks are persisted in PostgreSQL.
-- [ ] Planning screen can reload saved data from the API.
-- [ ] Backend validation rejects invalid payloads.
+- [X] Admin can create a template.
+- [X] Admin can add tasks manually.
+- [X] Tasks are persisted in PostgreSQL.
+- [X] Planning screen can reload saved data from the API.
+- [X] Backend validation rejects invalid payloads.
 
 ---
 
