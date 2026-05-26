@@ -113,7 +113,6 @@ describe('TemplatesService', () => {
         title: ' Check database ',
         owner: ' DBA ',
         estimatedMinutes: 15,
-        orderIndex: 999,
         requiresEvidence: true,
       }),
     ).resolves.toEqual({
@@ -157,7 +156,6 @@ describe('TemplatesService', () => {
       service.createTask('template-1', {
         externalId: 'T-001',
         title: '',
-        orderIndex: 0,
         requiresEvidence: false,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -176,7 +174,6 @@ describe('TemplatesService', () => {
       service.createTask('missing-template', {
         externalId: 'T-001',
         title: 'Check database',
-        orderIndex: 0,
         requiresEvidence: false,
       }),
     ).rejects.toBeInstanceOf(NotFoundException);

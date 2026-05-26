@@ -11,4 +11,7 @@ export type AuthenticatedRequest = {
   user?: SafeUser;
   isAuthenticated?: () => boolean;
   logout: (callback: (error?: Error) => void) => void;
+  session: {
+    destroy: (callback: (error?: Error) => void) => void;
+  };
 };

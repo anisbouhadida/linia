@@ -10,6 +10,15 @@ export class LocalAuthGuard extends AuthGuard('local') {
     assertLoginPayload(request.body);
 
     const canActivate = (await super.canActivate(context)) as boolean;
+    await new Promise<void>((resolve, reject) => {
+      request.session.regenerate((error?: Error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
     await super.logIn(request);
 
     return canActivate;

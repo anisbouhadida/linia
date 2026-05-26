@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import type { UserDto } from '@linia/shared';
 import { AuthService } from './auth.service';
@@ -80,6 +81,77 @@ describe('LoginPage', () => {
 
     expect(fixture.nativeElement.textContent).toContain(
       'Invalid email or password',
+    );
+  });
+
+  it('keeps the generic invalid-credentials message for 401 login failures', async () => {
+    auth.login.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 401,
+        error: {
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'Session expired',
+            details: [],
+          },
+        },
+      }),
+    );
+
+    const email = fixture.nativeElement.querySelector(
+      'input[type="email"]',
+    ) as HTMLInputElement;
+    const password = fixture.nativeElement.querySelector(
+      'input[type="password"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    email.value = 'admin@example.com';
+    email.dispatchEvent(new Event('input'));
+    password.value = 'change-me';
+    password.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Invalid email or password');
+    expect(fixture.nativeElement.textContent).not.toContain('Session expired');
+  });
+
+  it('shows backend validation details when login payload is rejected', async () => {
+    auth.login.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 400,
+        error: {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Login payload is invalid',
+            details: [{ field: 'email', message: 'Email must be valid' }],
+          },
+        },
+      }),
+    );
+
+    const email = fixture.nativeElement.querySelector(
+      'input[type="email"]',
+    ) as HTMLInputElement;
+    const password = fixture.nativeElement.querySelector(
+      'input[type="password"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    email.value = 'admin@example.com';
+    email.dispatchEvent(new Event('input'));
+    password.value = 'change-me';
+    password.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Email must be valid',
     );
   });
 });

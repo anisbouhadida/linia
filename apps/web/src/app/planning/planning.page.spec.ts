@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import type {
   ApiListResponse,
   TemplateDetailDto,
@@ -190,7 +191,6 @@ describe('PlanningPage', () => {
       description: '',
       owner: '',
       estimatedMinutes: undefined,
-      orderIndex: 0,
       requiresEvidence: false,
     });
     expect(
@@ -209,6 +209,94 @@ describe('PlanningPage', () => {
 
     expect(fixture.nativeElement.textContent).toContain(
       'Could not load templates',
+    );
+  });
+
+  it('shows backend validation details when template creation fails', async () => {
+    planning.createTemplate.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 400,
+        error: {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Template payload is invalid',
+            details: [{ field: 'name', message: 'Name is too long' }],
+          },
+        },
+      }),
+    );
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const name = fixture.nativeElement.querySelector(
+      'input[formcontrolname="name"]',
+    ) as HTMLInputElement;
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="template-form"] button[type="submit"]',
+    ) as HTMLButtonElement;
+
+    name.value = 'Core Migration';
+    name.dispatchEvent(new Event('input'));
+    button.click();
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Name is too long');
+  });
+
+  it('shows backend conflict details when task creation fails', async () => {
+    planning.listTemplates.mockResolvedValue({
+      data: [template],
+      meta: { total: 1, nextCursor: null },
+    } satisfies ApiListResponse<TemplateSummaryDto>);
+    planning.getTemplate.mockResolvedValue({ ...template, tasks: [] });
+    planning.createTask.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 409,
+        error: {
+          error: {
+            code: 'CONFLICT',
+            message: 'Task external ID already exists',
+            details: [],
+          },
+        },
+      }),
+    );
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="select-template"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const externalId = fixture.nativeElement.querySelector(
+      'input[formcontrolname="externalId"]',
+    ) as HTMLInputElement;
+    const title = fixture.nativeElement.querySelector(
+      'input[formcontrolname="title"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector(
+      '[data-testid="task-form"]',
+    ) as HTMLFormElement;
+
+    externalId.value = 'T-001';
+    externalId.dispatchEvent(new Event('input'));
+    title.value = 'Check database';
+    title.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Task external ID already exists',
     );
   });
 });
