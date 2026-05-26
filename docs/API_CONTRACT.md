@@ -90,7 +90,9 @@ MVP assumptions:
 - No OAuth.
 - No SSO.
 
-The API uses an HTTP-only session cookie.
+The API uses an HTTP-only session cookie. In production, the cookie is marked
+`Secure`; the API expects one trusted TLS-terminating reverse proxy hop so
+`X-Forwarded-Proto: https` is honored when setting the session cookie.
 
 Angular must send credentials with API requests.
 
@@ -611,10 +613,11 @@ Creates a task inside a template.
   "description": "Confirm DB connectivity before migration.",
   "owner": "DBA",
   "estimatedMinutes": 15,
-  "orderIndex": 1,
   "requiresEvidence": true
 }
 ```
+
+New tasks are appended to the template. The server assigns the next `orderIndex`.
 
 #### POST /templates/:templateId/tasks Validation
 
@@ -625,7 +628,6 @@ Creates a task inside a template.
 | `description` | No | string, max 2000 chars |
 | `owner` | No | string, max 120 chars |
 | `estimatedMinutes` | No | positive integer |
-| `orderIndex` | Yes | positive integer, unique within template |
 | `requiresEvidence` | Yes | boolean |
 
 #### POST /templates/:templateId/tasks Success Response

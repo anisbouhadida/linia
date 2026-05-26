@@ -16,10 +16,15 @@ export function configureSessionAuth(
 ): void {
   const isProduction = process.env.NODE_ENV === 'production';
 
+  if (isProduction) {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
+
   app.use(
     session({
       name: 'linia.sid',
       secret: configService.getOrThrow<string>('SESSION_SECRET'),
+      proxy: isProduction,
       resave: false,
       saveUninitialized: false,
       cookie: {

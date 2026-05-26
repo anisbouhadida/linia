@@ -17,6 +17,7 @@ type FindUniqueArgs = {
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let AppModule: typeof import('./../src/app.module').AppModule;
+  const originalNodeEnv = process.env.NODE_ENV;
 
   const admin = {
     id: 'user-1',
@@ -26,7 +27,7 @@ describe('AuthController (e2e)', () => {
   };
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+    process.env.DATABASE_URL = '******localhost:5432/test';
     process.env.SESSION_SECRET = 'test-session-secret';
     process.env.ADMIN_EMAIL = 'admin@example.com';
     process.env.ADMIN_INITIAL_PASSWORD = 'change-me';
@@ -34,7 +35,7 @@ describe('AuthController (e2e)', () => {
       require('./../src/app.module') as typeof import('./../src/app.module'));
   });
 
-  beforeEach(async () => {
+  async function createAuthTestApp(): Promise<INestApplication<App>> {
     const passwordHash = await bcrypt.hash('change-me', 4);
     const prisma = {
       user: {
@@ -62,8 +63,8 @@ describe('AuthController (e2e)', () => {
       .useValue(prisma)
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    configureSessionAuth(app, {
+    const testApp = moduleFixture.createNestApplication();
+    configureSessionAuth(testApp, {
       getOrThrow: (key: string) => {
         if (key === 'SESSION_SECRET') {
           return 'test-session-secret';
@@ -71,11 +72,19 @@ describe('AuthController (e2e)', () => {
         throw new Error(`Unexpected config key: ${key}`);
       },
     } as ConfigService);
-    await app.init();
+    await testApp.init();
+
+    return testApp;
+  }
+
+  beforeEach(async () => {
+    process.env.NODE_ENV = originalNodeEnv;
+    app = await createAuthTestApp();
   });
 
   afterEach(async () => {
     await app?.close();
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   it('logs in, returns the current user from the session, and logs out', async () => {
@@ -117,5 +126,28 @@ describe('AuthController (e2e)', () => {
       .post('/auth/login')
       .send({ email: 'admin@example.com', password: 'wrong-password' })
       .expect(401);
+  });
+
+  it('sets a secure session cookie in production when TLS is terminated by a trusted proxy', async () => {
+    await app.close();
+    process.env.NODE_ENV = 'production';
+    app = await createAuthTestApp();
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .set('X-Forwarded-Proto', 'https')
+      .send({ email: 'admin@example.com', password: 'change-me' })
+      .expect(201)
+      .expect(({ headers }) => {
+        const cookies = headers['set-cookie'];
+
+        expect(cookies).toEqual(
+          expect.arrayContaining([
+            expect.stringMatching(
+              /^linia\.sid=.*;\sPath=\/;\sExpires=.*;\sHttpOnly;\sSecure;\sSameSite=Lax$/,
+            ),
+          ]),
+        );
+      });
   });
 });

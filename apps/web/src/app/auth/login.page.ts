@@ -6,6 +6,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { authErrorMessage } from '../api-error-message';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -44,8 +45,8 @@ export class LoginPage {
     try {
       await this.auth.login(this.form.getRawValue());
       await this.router.navigateByUrl('/planning');
-    } catch {
-      this.errorMessage.set('Invalid email or password');
+    } catch (error) {
+      this.errorMessage.set(authErrorMessage(error));
     } finally {
       this.isSubmitting.set(false);
     }
