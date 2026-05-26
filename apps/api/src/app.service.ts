@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import type { RunStatus } from '@linia/shared';
+import { PrismaService } from './database/prisma.service';
 
 @Injectable()
 export class AppService {
-  private readonly defaultRunStatus: RunStatus = 'ACTIVE';
+  constructor(private readonly prisma: PrismaService) {}
 
-  getHello(): string {
-    return 'Hello World!';
+  getLive(): { data: { status: 'ok' } } {
+    return { data: { status: 'ok' } };
+  }
+
+  async getReady(): Promise<{ data: { status: 'ok'; database: 'ok' } }> {
+    await this.prisma.$queryRaw`SELECT 1`;
+
+    return { data: { status: 'ok', database: 'ok' } };
   }
 }
