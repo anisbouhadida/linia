@@ -90,7 +90,9 @@ MVP assumptions:
 - No OAuth.
 - No SSO.
 
-The API uses an HTTP-only session cookie.
+The API uses an HTTP-only session cookie. In production, the cookie is marked
+`Secure`; the API expects one trusted TLS-terminating reverse proxy hop so
+`X-Forwarded-Proto: https` is honored when setting the session cookie.
 
 Angular must send credentials with API requests.
 
