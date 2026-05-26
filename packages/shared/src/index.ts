@@ -276,7 +276,6 @@ export interface CreateTemplateTaskDto {
   description?: string;
   owner?: string;
   estimatedMinutes?: number;
-  orderIndex: number;
   requiresEvidence: boolean;
 }
 

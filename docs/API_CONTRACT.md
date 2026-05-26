@@ -613,10 +613,11 @@ Creates a task inside a template.
   "description": "Confirm DB connectivity before migration.",
   "owner": "DBA",
   "estimatedMinutes": 15,
-  "orderIndex": 1,
   "requiresEvidence": true
 }
 ```
+
+New tasks are appended to the template. The server assigns the next `orderIndex`.
 
 #### POST /templates/:templateId/tasks Validation
 
@@ -627,7 +628,6 @@ Creates a task inside a template.
 | `description` | No | string, max 2000 chars |
 | `owner` | No | string, max 120 chars |
 | `estimatedMinutes` | No | positive integer |
-| `orderIndex` | Yes | positive integer, unique within template |
 | `requiresEvidence` | Yes | boolean |
 
 #### POST /templates/:templateId/tasks Success Response

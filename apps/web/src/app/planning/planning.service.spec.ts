@@ -100,7 +100,6 @@ describe('PlanningService', () => {
     const promise = service.createTask('template-1', {
       externalId: 'T-001',
       title: 'Check database',
-      orderIndex: 0,
       requiresEvidence: true,
     });
 
@@ -109,7 +108,6 @@ describe('PlanningService', () => {
     expect(request.request.body).toEqual({
       externalId: 'T-001',
       title: 'Check database',
-      orderIndex: 0,
       requiresEvidence: true,
     });
     request.flush({ data: task } satisfies ApiDataResponse<TemplateTaskDto>);

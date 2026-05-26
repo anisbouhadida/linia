@@ -46,11 +46,6 @@ export class CreateTemplateTaskBody implements CreateTemplateTaskDto {
   @Min(0)
   estimatedMinutes?: number;
 
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  orderIndex!: number;
-
   @IsBoolean()
   requiresEvidence!: boolean;
 }
