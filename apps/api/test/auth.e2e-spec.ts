@@ -27,7 +27,7 @@ describe('AuthController (e2e)', () => {
   };
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = '******localhost:5432/test';
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.SESSION_SECRET = 'test-session-secret';
     process.env.ADMIN_EMAIL = 'admin@example.com';
     process.env.ADMIN_INITIAL_PASSWORD = 'change-me';
