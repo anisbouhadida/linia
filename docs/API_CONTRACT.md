@@ -94,11 +94,18 @@ The API uses an HTTP-only session cookie.
 
 Angular must send credentials with API requests.
 
-Production deployments must use a persistent session store. Set
-`SESSION_STORE_DRIVER=postgres` and `SESSION_STORE_DATABASE_URL` to a shared
-PostgreSQL database connection string. Local development defaults to the
-in-memory store; production startup fails if the persistent store is not
-configured.
+Environment contract for session configuration:
+
+- Local development should use `NODE_ENV=development`.
+- Local development should use `SESSION_STORE_DRIVER=memory`.
+- Local development may leave `SESSION_STORE_DATABASE_URL` empty because the
+  in-memory session store does not use it.
+- Production must use `NODE_ENV=production`.
+- Production deployments must use a persistent session store with
+  `SESSION_STORE_DRIVER=postgres`.
+- Production must set `SESSION_STORE_DATABASE_URL` to a shared PostgreSQL
+  database connection string.
+- Production startup fails if the persistent store is not configured.
 
 Example Angular expectation:
 
