@@ -15,6 +15,17 @@ type FindUniqueArgs = {
   };
 };
 
+const getSessionCookie = (setCookieHeader: string | string[] | undefined) => {
+  const cookies =
+    typeof setCookieHeader === 'string' ? [setCookieHeader] : setCookieHeader;
+
+  return cookies?.find((cookie) => cookie.startsWith('linia.sid='));
+};
+
+const getSessionCookieValue = (
+  setCookieHeader: string | string[] | undefined,
+) => getSessionCookie(setCookieHeader)?.split(';')[0];
+
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -99,8 +110,39 @@ describe('AuthController (e2e)', () => {
         });
       });
 
-    await agent.post('/auth/logout').expect(204);
+    await agent
+      .post('/auth/logout')
+      .expect(204)
+      .expect(({ headers }) => {
+        expect(getSessionCookie(headers['set-cookie'])).toContain(
+          'linia.sid=;',
+        );
+      });
     await agent.get('/auth/me').expect(401);
+  });
+
+  it('regenerates the session cookie after each successful login', async () => {
+    const agent = request.agent(app.getHttpServer());
+
+    const firstLogin = await agent
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'change-me' })
+      .expect(201);
+    const firstSessionCookie = getSessionCookieValue(
+      firstLogin.headers['set-cookie'],
+    );
+
+    const secondLogin = await agent
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'change-me' })
+      .expect(201);
+    const secondSessionCookie = getSessionCookieValue(
+      secondLogin.headers['set-cookie'],
+    );
+
+    expect(firstSessionCookie).toBeDefined();
+    expect(secondSessionCookie).toBeDefined();
+    expect(secondSessionCookie).not.toEqual(firstSessionCookie);
   });
 
   it('rejects login with an invalid password', async () => {
