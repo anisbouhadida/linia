@@ -5,11 +5,15 @@ import { PrismaService } from './database/prisma.service';
 
 describe('AppController', () => {
   let appController: AppController;
-  const prisma = {
-    $queryRaw: jest.fn().mockResolvedValue([{ ok: 1 }]),
+  let prisma: {
+    $queryRaw: jest.Mock;
   };
 
   beforeEach(async () => {
+    prisma = {
+      $queryRaw: jest.fn().mockResolvedValue([{ ok: 1 }]),
+    };
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
