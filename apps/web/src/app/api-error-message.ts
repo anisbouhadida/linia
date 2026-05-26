@@ -46,7 +46,13 @@ function extractApiError(error: unknown): ApiErrorResponse | null {
   if (
     typeof apiError.error.code !== 'string' ||
     typeof apiError.error.message !== 'string' ||
-    !Array.isArray(apiError.error.details)
+    !Array.isArray(apiError.error.details) ||
+    !apiError.error.details.every(
+      (detail) =>
+        typeof detail === 'object' &&
+        detail !== null &&
+        typeof (detail as { message?: unknown }).message === 'string',
+    )
   ) {
     return null;
   }
