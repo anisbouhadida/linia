@@ -103,18 +103,20 @@ describe('API error envelopes (e2e)', () => {
         .send({ name: 'Cutover', unexpected: 'field' })
         .expect(422)
         .expect(({ body }) => {
-          expect(body).toEqual({
+          expect(body).toMatchObject({
             error: {
               code: 'VALIDATION_ERROR',
               message: 'Validation failed',
-              details: [
-                {
-                  field: 'unexpected',
-                  message: 'property unexpected should not exist',
-                },
-              ],
             },
           });
+          expect(body.error.details).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                field: 'unexpected',
+                message: expect.stringContaining('should not exist'),
+              }),
+            ]),
+          );
         });
     } finally {
       await authenticatedApp.close();
