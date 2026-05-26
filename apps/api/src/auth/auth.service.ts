@@ -25,6 +25,11 @@ export class AuthService {
     private readonly passwordCompare: PasswordCompare = comparePassword,
   ) {}
 
+  /**
+   * Validates login credentials and returns the user shape stored in sessions.
+   *
+   * @throws UnauthorizedException when the email is unknown or the password does not match.
+   */
   async validateUser(email: string, password: string): Promise<SafeUser> {
     const user = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(email) },
@@ -44,6 +49,11 @@ export class AuthService {
     return toSafeUser(user);
   }
 
+  /**
+   * Resolves the current session user without exposing password material.
+   *
+   * @returns The user for an active session, or null when the stored id no longer exists.
+   */
   async findSessionUser(id: string): Promise<SafeUser | null> {
     return this.prisma.user.findUnique({
       where: { id },

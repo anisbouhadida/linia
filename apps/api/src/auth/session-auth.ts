@@ -4,6 +4,12 @@ import session from 'express-session';
 import passport from 'passport';
 import type { EnvConfig } from '../config/env.validation';
 
+/**
+ * Registers session and Passport middleware for cookie-backed authentication.
+ *
+ * The session cookie is HTTP-only, uses the configured secret, and is marked
+ * secure when the API runs with NODE_ENV set to production.
+ */
 export function configureSessionAuth(
   app: INestApplication,
   configService: ConfigService<EnvConfig>,

@@ -1,3 +1,4 @@
+/** User shape stored on authenticated requests and serialized into sessions. */
 export type SafeUser = {
   id: string;
   email: string;
@@ -5,6 +6,7 @@ export type SafeUser = {
   createdAt: Date;
 };
 
+/** Express request shape after Passport session middleware has attached auth helpers. */
 export type AuthenticatedRequest = {
   user?: SafeUser;
   isAuthenticated?: () => boolean;

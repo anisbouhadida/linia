@@ -13,6 +13,11 @@ const requiredKeys = [
   'ADMIN_INITIAL_PASSWORD',
 ] as const;
 
+/**
+ * Validates process configuration and applies defaults used by the API.
+ *
+ * @throws Error when a required variable is empty or API_PORT is outside the valid TCP port range.
+ */
 export function validateEnv(config: Record<string, unknown>): EnvConfig {
   const errors: string[] = [];
 

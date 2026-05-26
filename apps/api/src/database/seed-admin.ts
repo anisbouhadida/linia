@@ -28,6 +28,11 @@ export type SeedAdminResult = {
   email: string;
 };
 
+/**
+ * Ensures the configured admin account exists without changing an existing user.
+ *
+ * The email is normalized before lookup and creation so repeated seed runs are idempotent.
+ */
 export async function seedAdminUser(
   prisma: SeedAdminPrisma,
   options: SeedAdminOptions,

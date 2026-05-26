@@ -17,6 +17,11 @@ export class AuthService {
 
   constructor(private readonly http: HttpClient) {}
 
+  /**
+   * Loads the current session user and synchronizes the local auth signal.
+   *
+   * @returns The current user, or null when the API reports an unauthenticated session.
+   */
   async loadCurrentUser(): Promise<UserDto | null> {
     try {
       const response = await firstValueFrom(
@@ -34,6 +39,9 @@ export class AuthService {
     }
   }
 
+  /**
+   * Authenticates with the API and stores the returned user in local auth state.
+   */
   async login(credentials: LoginCredentials): Promise<UserDto> {
     const response = await firstValueFrom(
       this.http.post<ApiDataResponse<UserDto>>('/auth/login', credentials),
@@ -42,11 +50,17 @@ export class AuthService {
     return response.data;
   }
 
+  /**
+   * Ends the API session and clears local auth state after the request succeeds.
+   */
   async logout(): Promise<void> {
     await firstValueFrom(this.http.post<void>('/auth/logout', null));
     this.user.set(null);
   }
 
+  /**
+   * Replaces local auth state with a user resolved outside this service.
+   */
   setCurrentUser(user: UserDto | null): void {
     this.user.set(user);
   }
