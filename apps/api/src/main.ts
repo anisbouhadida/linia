@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { configureSessionAuth } from './auth/session-auth';
@@ -10,12 +9,6 @@ async function bootstrap() {
   const configService = app.get(ConfigService<EnvConfig>);
 
   configureSessionAuth(app, configService);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-    }),
-  );
 
   await app.listen(configService.getOrThrow<number>('API_PORT'));
 }
