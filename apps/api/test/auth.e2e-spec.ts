@@ -42,9 +42,7 @@ describe('AuthController (e2e)', () => {
     process.env.SESSION_SECRET = 'test-session-secret';
     process.env.ADMIN_EMAIL = 'admin@example.com';
     process.env.ADMIN_INITIAL_PASSWORD = 'change-me';
-    ({ AppModule } = jest.requireActual<typeof import('./../src/app.module')>(
-      './../src/app.module',
-    ));
+    ({ AppModule } = jest.requireActual('./../src/app.module'));
   });
 
   async function createAuthTestApp(): Promise<INestApplication<App>> {
