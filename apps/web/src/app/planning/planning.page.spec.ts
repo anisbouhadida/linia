@@ -78,13 +78,13 @@ describe('PlanningPage', () => {
     const name = fixture.nativeElement.querySelector(
       'input[formcontrolname="name"]',
     ) as HTMLInputElement;
-    const form = fixture.nativeElement.querySelector(
-      '[data-testid="template-form"]',
-    ) as HTMLFormElement;
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="template-form"] button[type="submit"]',
+    ) as HTMLButtonElement;
 
     name.value = 'Core Migration';
     name.dispatchEvent(new Event('input'));
-    form.dispatchEvent(new Event('submit'));
+    button.click();
 
     await fixture.whenStable();
     fixture.detectChanges();
@@ -95,6 +95,25 @@ describe('PlanningPage', () => {
     });
     expect(fixture.nativeElement.textContent).toContain('Core Migration');
     expect(fixture.nativeElement.textContent).toContain('No tasks yet');
+  });
+
+  it('shows template name validation when create is clicked without a name', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="template-form"] button[type="submit"]',
+    ) as HTMLButtonElement;
+    button.click();
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(planning.createTemplate).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Template name is required',
+    );
   });
 
   it('loads a selected template with tasks', async () => {

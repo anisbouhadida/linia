@@ -42,10 +42,24 @@
             <input
               id="template-name"
               class="form-control"
+              [class.is-invalid]="
+                templateForm.controls.name.touched &&
+                templateForm.controls.name.invalid
+              "
               type="text"
               formControlName="name"
               placeholder="Core Migration"
+              required
+              aria-describedby="template-name-feedback"
             />
+            @if (
+              templateForm.controls.name.touched &&
+              templateForm.controls.name.invalid
+            ) {
+              <div id="template-name-feedback" class="invalid-feedback">
+                Template name is required
+              </div>
+            }
           </div>
           <div>
             <label class="form-label" for="template-description">
