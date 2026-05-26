@@ -6,6 +6,7 @@ import type {
   TemplateSummaryDto,
   TemplateTaskDto,
 } from '@linia/shared';
+import { apiErrorMessage } from '../api-error-message';
 import { PlanningService } from './planning.service';
 
 @Component({
@@ -59,8 +60,8 @@ export class PlanningPage implements OnInit {
     try {
       const response = await this.planningService.listTemplates();
       this.templates.set(response.data);
-    } catch {
-      this.errorMessage.set('Could not load templates');
+    } catch (error) {
+      this.errorMessage.set(apiErrorMessage(error, 'Could not load templates'));
     } finally {
       this.loadingTemplates.set(false);
     }
@@ -82,8 +83,8 @@ export class PlanningPage implements OnInit {
       this.templates.update((templates) => [template, ...templates]);
       this.selectedTemplate.set({ ...template, tasks: [] });
       this.templateForm.reset({ name: '', description: '' });
-    } catch {
-      this.errorMessage.set('Could not create template');
+    } catch (error) {
+      this.errorMessage.set(apiErrorMessage(error, 'Could not create template'));
     } finally {
       this.templateSubmitting.set(false);
     }
@@ -95,8 +96,10 @@ export class PlanningPage implements OnInit {
 
     try {
       this.selectedTemplate.set(await this.planningService.getTemplate(templateId));
-    } catch {
-      this.errorMessage.set('Could not load template details');
+    } catch (error) {
+      this.errorMessage.set(
+        apiErrorMessage(error, 'Could not load template details'),
+      );
     } finally {
       this.loadingTemplate.set(false);
     }
@@ -133,8 +136,8 @@ export class PlanningPage implements OnInit {
         estimatedMinutes: '',
         requiresEvidence: false,
       });
-    } catch {
-      this.errorMessage.set('Could not create task');
+    } catch (error) {
+      this.errorMessage.set(apiErrorMessage(error, 'Could not create task'));
     } finally {
       this.taskSubmitting.set(false);
     }
@@ -165,8 +168,8 @@ export class PlanningPage implements OnInit {
         { [field]: value },
       );
       this.replaceTask(updatedTask);
-    } catch {
-      this.errorMessage.set('Could not update task');
+    } catch (error) {
+      this.errorMessage.set(apiErrorMessage(error, 'Could not update task'));
     }
   }
 
