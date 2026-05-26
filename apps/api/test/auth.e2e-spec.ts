@@ -109,4 +109,16 @@ describe('AuthController (e2e)', () => {
       .send({ email: 'admin@example.com', password: 'wrong-password' })
       .expect(401);
   });
+
+  it('rejects malformed login payloads without a server error', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: {}, password: {} })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 123, password: false })
+      .expect(400);
+  });
 });

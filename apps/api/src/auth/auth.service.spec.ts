@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -54,6 +54,23 @@ describe('AuthService', () => {
       service.validateUser('missing@example.com', 'wrong-password'),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
+    expect(comparePassword).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-string credentials before normalizing or comparing values', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn(),
+      },
+    };
+    const comparePassword = jest.fn();
+    const service = new AuthService(prisma, comparePassword);
+
+    await expect(
+      service.validateUser({} as string, {} as string),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
     expect(comparePassword).not.toHaveBeenCalled();
   });
 

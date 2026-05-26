@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Optional,
@@ -28,9 +29,14 @@ export class AuthService {
   /**
    * Validates login credentials and returns the user shape stored in sessions.
    *
+   * @throws BadRequestException when the payload does not contain string credentials.
    * @throws UnauthorizedException when the email is unknown or the password does not match.
    */
   async validateUser(email: string, password: string): Promise<SafeUser> {
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      throw new BadRequestException('Email and password must be strings');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(email) },
       select: {
