@@ -1,10 +1,5 @@
 import { Component, signal } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { authErrorMessage } from '../api-error-message';
 import { AuthService } from './auth.service';
@@ -22,7 +17,7 @@ import { AuthService } from './auth.service';
 })
 export class LoginPage {
   protected readonly form = new FormGroup({
-    email: new FormControl('admin@example.com', {
+    email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),

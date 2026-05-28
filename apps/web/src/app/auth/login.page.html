@@ -1,28 +1,52 @@
-<main class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-body text-body p-3">
+<main
+  class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-body text-body p-3"
+>
   <section
     class="col-12 col-sm-8 col-md-5 col-lg-4 border rounded bg-body-tertiary p-4"
     aria-labelledby="login-title"
   >
     <p class="small text-body-secondary font-monospace text-uppercase mb-2">Linia Command</p>
     <h1 id="login-title" class="h4 mb-4">Operator login</h1>
-    <form class="d-grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
-      <label class="form-label small text-body-secondary mb-0" for="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        formControlName="email"
-        autocomplete="username"
-        class="form-control"
-      />
+    <form class="d-grid gap-3" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div>
+        <label class="form-label small text-body-secondary" for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          class="form-control"
+          [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid"
+          aria-describedby="email-feedback"
+          required
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <div id="email-feedback" class="invalid-feedback">
+            @if (form.controls.email.hasError('required')) {
+              Email is required
+            } @else {
+              Enter a valid email address
+            }
+          </div>
+        }
+      </div>
 
-      <label class="form-label small text-body-secondary mb-0" for="password">Password</label>
-      <input
-        id="password"
-        type="password"
-        formControlName="password"
-        autocomplete="current-password"
-        class="form-control"
-      />
+      <div>
+        <label class="form-label small text-body-secondary" for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          class="form-control"
+          [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid"
+          aria-describedby="password-feedback"
+          required
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <div id="password-feedback" class="invalid-feedback">Password is required</div>
+        }
+      </div>
 
       @if (errorMessage()) {
         <p class="text-danger-emphasis mb-0" role="alert">{{ errorMessage() }}</p>

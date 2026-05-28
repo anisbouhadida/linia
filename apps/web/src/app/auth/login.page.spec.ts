@@ -84,6 +84,45 @@ describe('LoginPage', () => {
     );
   });
 
+  it('shows Bootstrap validation feedback when password is missing', () => {
+    const password = fixture.nativeElement.querySelector(
+      'input[type="password"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    form.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(auth.login).not.toHaveBeenCalled();
+    expect(password.classList.contains('is-invalid')).toBe(true);
+    expect(password.getAttribute('aria-describedby')).toBe('password-feedback');
+    expect(fixture.nativeElement.textContent).toContain('Password is required');
+  });
+
+  it('shows Bootstrap validation feedback when email is malformed', () => {
+    const email = fixture.nativeElement.querySelector(
+      'input[type="email"]',
+    ) as HTMLInputElement;
+    const password = fixture.nativeElement.querySelector(
+      'input[type="password"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    email.value = 'not-an-email';
+    email.dispatchEvent(new Event('input'));
+    password.value = 'change-me';
+    password.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(auth.login).not.toHaveBeenCalled();
+    expect(email.classList.contains('is-invalid')).toBe(true);
+    expect(email.getAttribute('aria-describedby')).toBe('email-feedback');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Enter a valid email address',
+    );
+  });
+
   it('keeps the generic invalid-credentials message for 401 login failures', async () => {
     auth.login.mockRejectedValue(
       new HttpErrorResponse({
