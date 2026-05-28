@@ -1,6 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import type { ApiErrorResponse } from '@linia/shared';
 
+/**
+ * Converts Linia API error envelopes into compact UI messages.
+ *
+ * Validation details are preferred because they point users to the field-level
+ * problem; otherwise the shared error message or caller fallback is used.
+ *
+ * @param error - Unknown error caught from an Angular API request.
+ * @param fallback - Message to display when the error is not a Linia envelope.
+ * @returns User-facing message suitable for compact alert text.
+ */
 export function apiErrorMessage(error: unknown, fallback: string): string {
   const apiError = extractApiError(error);
   if (!apiError) {
@@ -18,6 +28,12 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   return apiError.error.message || fallback;
 }
 
+/**
+ * Presents authentication failures without leaking whether an email exists.
+ *
+ * @param error - Unknown login error caught from the API request.
+ * @returns Safe authentication failure message.
+ */
 export function authErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse && error.status === 401) {
     return 'Invalid email or password';
@@ -26,6 +42,12 @@ export function authErrorMessage(error: unknown): string {
   return apiErrorMessage(error, 'Invalid email or password');
 }
 
+/**
+ * Safely recognizes the shared API error envelope inside Angular HTTP errors.
+ *
+ * @param error - Unknown error value to inspect.
+ * @returns The parsed API error envelope, or null when the shape is not trusted.
+ */
 function extractApiError(error: unknown): ApiErrorResponse | null {
   if (!(error instanceof HttpErrorResponse)) {
     return null;

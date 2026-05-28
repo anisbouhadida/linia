@@ -9,6 +9,13 @@ import type {
 import { apiErrorMessage } from '../api-error-message';
 import { PlanningService } from './planning.service';
 
+/**
+ * Planning workspace for creating templates and manually managing their tasks.
+ *
+ * The component keeps UI state in Angular signals, delegates persistence to
+ * PlanningService, and mirrors successful mutations into local state so the
+ * dense planning table stays responsive without a full reload after each edit.
+ */
 @Component({
   selector: 'app-planning-page',
   imports: [CommonModule, ReactiveFormsModule],
@@ -49,10 +56,18 @@ export class PlanningPage implements OnInit {
     });
   }
 
+  /**
+   * Loads template summaries shown in the planning navigation list.
+   */
   ngOnInit(): void {
     void this.loadTemplates();
   }
 
+  /**
+   * Refreshes template summaries and stores any API failure as a user-facing message.
+   *
+   * @returns Resolves after loading state has been cleared.
+   */
   async loadTemplates(): Promise<void> {
     this.loadingTemplates.set(true);
     this.errorMessage.set(null);
@@ -67,6 +82,11 @@ export class PlanningPage implements OnInit {
     }
   }
 
+  /**
+   * Creates a template from the form and selects it for immediate task entry.
+   *
+   * @returns Resolves after the submit attempt finishes.
+   */
   async createTemplate(): Promise<void> {
     if (this.templateForm.invalid || this.templateSubmitting()) {
       this.templateForm.markAllAsTouched();
@@ -90,6 +110,12 @@ export class PlanningPage implements OnInit {
     }
   }
 
+  /**
+   * Loads a template detail record for editing.
+   *
+   * @param templateId - Template id selected by the operator.
+   * @returns Resolves after the selected template state is updated or an error is shown.
+   */
   async selectTemplate(templateId: string): Promise<void> {
     this.loadingTemplate.set(true);
     this.errorMessage.set(null);
@@ -105,6 +131,11 @@ export class PlanningPage implements OnInit {
     }
   }
 
+  /**
+   * Creates a task from form values, including normalized optional minutes.
+   *
+   * @returns Resolves after the task submit attempt finishes.
+   */
   async createTask(): Promise<void> {
     const template = this.selectedTemplate();
     if (!template || this.taskForm.invalid || this.taskSubmitting()) {
@@ -143,6 +174,14 @@ export class PlanningPage implements OnInit {
     }
   }
 
+  /**
+   * Persists a single editable task field and replaces the local row on success.
+   *
+   * @param task - Existing task row being edited.
+   * @param field - Editable task field represented by the changed input.
+   * @param event - DOM change event from the input control.
+   * @returns Resolves after the patch attempt finishes.
+   */
   async updateTask(
     task: TemplateTaskDto,
     field: 'title' | 'owner' | 'estimatedMinutes' | 'requiresEvidence',
@@ -173,6 +212,11 @@ export class PlanningPage implements OnInit {
     }
   }
 
+  /**
+   * Adds a task to selected-template state and increments the sidebar count.
+   *
+   * @param task - Created task returned by the API.
+   */
   private appendTask(task: TemplateTaskDto): void {
     this.selectedTemplate.update((template) =>
       template ? { ...template, tasks: [...template.tasks, task] } : template,
@@ -186,6 +230,11 @@ export class PlanningPage implements OnInit {
     );
   }
 
+  /**
+   * Replaces a task row in selected-template state after a successful patch.
+   *
+   * @param task - Updated task returned by the API.
+   */
   private replaceTask(task: TemplateTaskDto): void {
     this.selectedTemplate.update((template) =>
       template
@@ -200,6 +249,12 @@ export class PlanningPage implements OnInit {
   }
 }
 
+/**
+ * Parses optional form input into the API's whole-minute estimate contract.
+ *
+ * @param value - Raw text from the estimated-minutes form control.
+ * @returns A non-negative integer estimate, or undefined when blank or invalid.
+ */
 function parseOptionalInteger(value: string): number | undefined {
   if (!value) {
     return undefined;

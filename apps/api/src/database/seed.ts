@@ -4,6 +4,14 @@ import { validateEnv } from '../config/env.validation';
 import { PrismaService } from './prisma.service';
 import { seedAdminUser } from './seed-admin';
 
+/**
+ * Runs the database seed entrypoint used by Prisma.
+ *
+ * The seed currently creates or reuses the configured admin/operator account
+ * and never rewrites an existing user's password.
+ *
+ * @returns Resolves after the seed operation logs its outcome and disconnects.
+ */
 async function main(): Promise<void> {
   const env = validateEnv(process.env);
   const configService = new ConfigService(env);

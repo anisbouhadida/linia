@@ -1,3 +1,6 @@
+/**
+ * Runtime configuration contract consumed through Nest's ConfigService.
+ */
 export type EnvConfig = {
   NODE_ENV: string;
   API_PORT: number;
@@ -19,6 +22,8 @@ const requiredKeys = [
 /**
  * Validates process configuration and applies defaults used by the API.
  *
+ * @param config - Raw environment-like key/value object to validate.
+ * @returns Normalized configuration consumed by Nest's ConfigService.
  * @throws Error when a required variable is empty or API_PORT is outside the valid TCP port range.
  */
 export function validateEnv(config: Record<string, unknown>): EnvConfig {
@@ -73,6 +78,12 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
   };
 }
 
+/**
+ * Parses the optional NODE_ENV value used by Nest and session configuration.
+ *
+ * @param value - Raw NODE_ENV candidate.
+ * @returns A supported environment name, the development default, or null.
+ */
 function parseNodeEnv(value: unknown): string | null {
   if (value === undefined || value === null || value === '') {
     return 'development';
@@ -89,6 +100,12 @@ function parseNodeEnv(value: unknown): string | null {
   return null;
 }
 
+/**
+ * Parses an optional API port and rejects values outside the TCP port range.
+ *
+ * @param value - Raw API_PORT candidate.
+ * @returns A port number, the default API port, or null for invalid input.
+ */
 function parsePort(value: unknown): number | null {
   if (value === undefined || value === null || value === '') {
     return 3000;
@@ -103,6 +120,12 @@ function parsePort(value: unknown): number | null {
   return port;
 }
 
+/**
+ * Parses the session persistence mode without allowing accidental production memory stores.
+ *
+ * @param value - Raw SESSION_STORE_DRIVER candidate.
+ * @returns The selected driver, the local default, or null for invalid input.
+ */
 function parseSessionStoreDriver(
   value: unknown,
 ): EnvConfig['SESSION_STORE_DRIVER'] | null {
@@ -117,6 +140,12 @@ function parseSessionStoreDriver(
   return null;
 }
 
+/**
+ * Returns a trimmed optional string for configuration values that may be blank locally.
+ *
+ * @param value - Raw optional environment value.
+ * @returns The original non-empty string, or undefined when absent or blank.
+ */
 function parseOptionalString(value: unknown): string | undefined {
   if (typeof value !== 'string' || value.trim() === '') {
     return undefined;

@@ -3,8 +3,21 @@ import type { ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 
+/**
+ * Passport local-auth guard that validates payload shape before strategy execution.
+ *
+ * On successful credential validation it regenerates the session id before login
+ * to avoid carrying an unauthenticated session identifier into the authenticated
+ * state.
+ */
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
+  /**
+   * Validates credentials, rotates the session, and attaches the Passport user.
+   *
+   * @param context - Nest execution context for the login request.
+   * @returns True when Passport accepts the credentials and the session is regenerated.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     assertLoginPayload(request.body);
@@ -25,6 +38,13 @@ export class LocalAuthGuard extends AuthGuard('local') {
   }
 }
 
+/**
+ * Narrows unknown request bodies before Passport reads `email` and `password`.
+ *
+ * @param body - Raw request body supplied to the login endpoint.
+ * @returns Narrows the body type when validation succeeds.
+ * @throws BadRequestException when email or password is missing or not a string.
+ */
 function assertLoginPayload(body: unknown): asserts body is {
   email: string;
   password: string;

@@ -1,3 +1,6 @@
+/**
+ * Minimal Prisma user delegate surface required by the admin seed helper.
+ */
 type UserModel = {
   findUnique(args: {
     where: { email: string };
@@ -17,12 +20,18 @@ type SeedAdminPrisma = {
   user: UserModel;
 };
 
+/**
+ * Inputs needed to create the initial operator account.
+ */
 type SeedAdminOptions = {
   adminEmail: string;
   adminInitialPassword: string;
   hashPassword: (password: string) => Promise<string>;
 };
 
+/**
+ * Outcome reported by the seed script without exposing credential material.
+ */
 export type SeedAdminResult = {
   created: boolean;
   email: string;
@@ -32,6 +41,10 @@ export type SeedAdminResult = {
  * Ensures the configured admin account exists without changing an existing user.
  *
  * The email is normalized before lookup and creation so repeated seed runs are idempotent.
+ *
+ * @param prisma - Minimal Prisma client surface used to find or create a user.
+ * @param options - Seed configuration and password hashing callback.
+ * @returns Whether a user was created and the normalized admin email.
  */
 export async function seedAdminUser(
   prisma: SeedAdminPrisma,
@@ -68,6 +81,12 @@ export async function seedAdminUser(
   };
 }
 
+/**
+ * Canonicalizes the configured admin email for idempotent seeding.
+ *
+ * @param email - Raw admin email from environment configuration.
+ * @returns Lowercase trimmed email address.
+ */
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }

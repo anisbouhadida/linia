@@ -29,6 +29,9 @@ export class AuthService {
   /**
    * Validates login credentials and returns the user shape stored in sessions.
    *
+   * @param email - User-submitted email address, normalized before lookup.
+   * @param password - User-submitted plain-text password to compare with the stored hash.
+   * @returns The safe user shape stored in the Passport session.
    * @throws BadRequestException when the payload does not contain string credentials.
    * @throws UnauthorizedException when the email is unknown or the password does not match.
    */
@@ -58,6 +61,7 @@ export class AuthService {
   /**
    * Resolves the current session user without exposing password material.
    *
+   * @param id - User id deserialized from the session.
    * @returns The user for an active session, or null when the stored id no longer exists.
    */
   async findSessionUser(id: string): Promise<SafeUser | null> {
@@ -73,10 +77,22 @@ export class AuthService {
   }
 }
 
+/**
+ * Canonicalizes emails for login and seeded-account lookup.
+ *
+ * @param email - Raw email address from credentials or configuration.
+ * @returns Lowercase trimmed email address.
+ */
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+/**
+ * Removes credential material from a selected user record.
+ *
+ * @param user - Prisma user projection that includes the password hash.
+ * @returns Safe user data allowed in sessions and API responses.
+ */
 function toSafeUser(user: UserWithPasswordHash): SafeUser {
   return {
     id: user.id,

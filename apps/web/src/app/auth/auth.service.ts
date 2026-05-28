@@ -3,11 +3,21 @@ import { Injectable, computed, signal } from '@angular/core';
 import type { ApiDataResponse, UserDto } from '@linia/shared';
 import { firstValueFrom } from 'rxjs';
 
+/**
+ * Credentials submitted to the API local-login endpoint.
+ */
 export type LoginCredentials = {
   email: string;
   password: string;
 };
 
+/**
+ * Client-side authentication facade for session-backed API auth.
+ *
+ * The browser session remains authoritative on the backend; this service mirrors
+ * the resolved user in Angular signals so guards, layout, and pages can react to
+ * login/logout changes.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly user = signal<UserDto | null>(null);
@@ -41,6 +51,9 @@ export class AuthService {
 
   /**
    * Authenticates with the API and stores the returned user in local auth state.
+   *
+   * @param credentials - Email and password entered on the login page.
+   * @returns The authenticated user returned by the API.
    */
   async login(credentials: LoginCredentials): Promise<UserDto> {
     const response = await firstValueFrom(
@@ -52,6 +65,8 @@ export class AuthService {
 
   /**
    * Ends the API session and clears local auth state after the request succeeds.
+   *
+   * @returns Resolves after the logout request completes.
    */
   async logout(): Promise<void> {
     await firstValueFrom(this.http.post<void>('/auth/logout', null));
@@ -60,12 +75,20 @@ export class AuthService {
 
   /**
    * Replaces local auth state with a user resolved outside this service.
+   *
+   * @param user - Current user to expose through auth signals, or null to clear.
    */
   setCurrentUser(user: UserDto | null): void {
     this.user.set(user);
   }
 }
 
+/**
+ * Detects the unauthenticated response used by the session guard.
+ *
+ * @param error - Unknown error thrown by Angular HttpClient.
+ * @returns True when the API reported HTTP 401.
+ */
 function isUnauthenticated(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 401;
 }

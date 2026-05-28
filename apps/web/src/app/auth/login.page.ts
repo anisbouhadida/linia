@@ -9,6 +9,12 @@ import { Router } from '@angular/router';
 import { authErrorMessage } from '../api-error-message';
 import { AuthService } from './auth.service';
 
+/**
+ * Login screen for the seeded operator account.
+ *
+ * The page owns form validation and submission state, while AuthService owns
+ * session synchronization and API communication.
+ */
 @Component({
   selector: 'app-login-page',
   imports: [ReactiveFormsModule],
@@ -33,6 +39,11 @@ export class LoginPage {
     private readonly router: Router,
   ) {}
 
+  /**
+   * Authenticates the submitted credentials and enters the protected planning area.
+   *
+   * @returns Resolves after the submit attempt finishes and navigation occurs on success.
+   */
   async submit(): Promise<void> {
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();

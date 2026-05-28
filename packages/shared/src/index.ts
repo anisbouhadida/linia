@@ -1,4 +1,9 @@
-/** Ordered lifecycle states for a task within a run board. */
+/**
+ * Ordered lifecycle states for a task within a run board.
+ *
+ * `BLOCKED` tasks cannot start until all predecessors complete, and `FAILED`
+ * tasks intentionally do not unlock downstream work.
+ */
 export const RUN_TASK_STATUSES = [
   "BLOCKED",
   "READY",
@@ -14,7 +19,12 @@ export const RUN_STATUSES = ["ACTIVE", "COMPLETED", "ABORTED"] as const;
 
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
-/** Audit event identifiers emitted by run and task workflows. */
+/**
+ * Audit event identifiers emitted by run and task workflows.
+ *
+ * These values are persisted in the append-only audit ledger, so changes here
+ * must stay compatible with existing database rows and API clients.
+ */
 export const AUDIT_EVENT_TYPES = [
   "RUN_LAUNCHED",
   "TASK_READY",
@@ -28,7 +38,11 @@ export const AUDIT_EVENT_TYPES = [
 
 export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[number];
 
-/** Stable machine-readable error codes returned by the API error envelope. */
+/**
+ * Stable machine-readable error codes returned by the API error envelope.
+ *
+ * UI code should branch on these values rather than parsing human messages.
+ */
 export const API_ERROR_CODES = [
   "BAD_REQUEST",
   "UNAUTHENTICATED",
@@ -56,9 +70,13 @@ export type IsoDateTimeString = string;
 /** Opaque database-backed identifier exposed through API DTOs. */
 export type EntityId = string;
 
-/** Field-level or request-level validation detail attached to an API error. */
+/**
+ * Field-level or request-level validation detail attached to an API error.
+ */
 export interface ApiErrorDetail {
+  /** Dot-path field name when the error belongs to a specific request property. */
   field?: string;
+  /** Human-readable validation or business-rule message. */
   message: string;
 }
 
@@ -79,7 +97,12 @@ export interface ApiDataResponse<TData> {
   data: TData;
 }
 
-/** Pagination metadata for list endpoints. */
+/**
+ * Pagination metadata for list endpoints.
+ *
+ * `nextCursor` is reserved for future cursor pagination; current MVP endpoints
+ * may return `null` while still exposing total counts.
+ */
 export interface ApiListMeta {
   total: number;
   nextCursor?: string | null;
@@ -114,7 +137,12 @@ export interface TemplateSummaryDto {
   updatedAt: IsoDateTimeString;
 }
 
-/** Task definition as stored on a template before a run is launched. */
+/**
+ * Task definition as stored on a template before a run is launched.
+ *
+ * Template tasks remain editable; launched runs snapshot these fields into
+ * run-specific task records so historical execution data stays stable.
+ */
 export interface TemplateTaskDto {
   id: EntityId;
   templateId: EntityId;
@@ -186,7 +214,12 @@ export interface RunSummaryDto {
   createdAt: IsoDateTimeString;
 }
 
-/** Runtime task state including dependency and optimistic-locking metadata. */
+/**
+ * Runtime task state including dependency and optimistic-locking metadata.
+ *
+ * `version` must be supplied back by clients when mutating a task so the API can
+ * reject stale actions during live run execution.
+ */
 export interface RunTaskDto {
   id: EntityId;
   runId: EntityId;
@@ -204,9 +237,13 @@ export interface RunTaskDto {
   completedAt: IsoDateTimeString | null;
   failedAt: IsoDateTimeString | null;
   dependsOn: EntityId[];
+  /** Dependency ids that currently prevent this task from starting. */
   blockingTaskIds: EntityId[];
+  /** Number of text evidence entries already attached to this run task. */
   evidenceCount: number;
+  /** Server-authoritative flag used by the UI to enable start actions. */
   canStart: boolean;
+  /** Server-authoritative flag used by the UI to enable completion actions. */
   canComplete: boolean;
 }
 
@@ -236,14 +273,24 @@ export interface EvidenceDto {
   createdAt: IsoDateTimeString;
 }
 
-/** Flexible event metadata stored alongside an audit entry. */
+/**
+ * Flexible event metadata stored alongside an audit entry.
+ *
+ * Keep values JSON-serializable because metadata is persisted and returned
+ * through the API without a richer schema.
+ */
 export interface AuditEntryMetadataDto {
   externalId?: string;
   version?: number;
   [key: string]: unknown;
 }
 
-/** Immutable audit log entry for a run or task workflow event. */
+/**
+ * Immutable audit log entry for a run or task workflow event.
+ *
+ * Application code must append entries only; update/delete flows are outside
+ * the MVP contract.
+ */
 export interface AuditEntryDto {
   id: EntityId;
   runId: EntityId;
@@ -295,7 +342,12 @@ export interface CreateTemplateDependencyDto {
   dependsOnTaskId: EntityId;
 }
 
-/** Raw CSV import request used to create a template and its tasks. */
+/**
+ * Raw CSV import request used to create a template and its tasks.
+ *
+ * The backend accepts CSV text inside JSON; it must not introduce file-upload
+ * infrastructure for the MVP.
+ */
 export interface ImportTemplateCsvTextDto {
   templateName: string;
   description?: string;
@@ -308,7 +360,12 @@ export interface CreateRunDto {
   name: string;
 }
 
-/** Optimistic-lock token required when mutating a run task. */
+/**
+ * Optimistic-lock token required when mutating a run task.
+ *
+ * The API compares this with the current task version and returns `STALE_VERSION`
+ * when another operator or request has already changed the task.
+ */
 export interface RunTaskVersionDto {
   clientVersion: number;
 }

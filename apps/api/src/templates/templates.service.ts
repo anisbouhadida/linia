@@ -46,10 +46,22 @@ type TemplateDetailRecord = {
   tasks: TemplateTaskWithDependencies[];
 };
 
+/**
+ * Coordinates template persistence and task normalization for the planning API.
+ *
+ * This service is the server-side authority for trimming text fields, assigning
+ * task order, ensuring template ownership of task mutations, and translating
+ * Prisma records into shared DTOs.
+ */
 @Injectable()
 export class TemplatesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Reads all templates with task counts for the planning sidebar.
+   *
+   * @returns A list envelope containing template summaries and total count.
+   */
   async listTemplates(): Promise<ApiListResponse<TemplateSummaryDto>> {
     const [templates, total] = await Promise.all([
       this.prisma.template.findMany({
@@ -65,6 +77,13 @@ export class TemplatesService {
     };
   }
 
+  /**
+   * Creates a template after normalizing required and optional text.
+   *
+   * @param input - Template creation payload from the controller.
+   * @returns The persisted template summary with an initial task count.
+   * @throws BadRequestException when the name is blank after trimming.
+   */
   async createTemplate(
     input: CreateTemplateDto,
   ): Promise<TemplateSummaryDto> {
@@ -79,6 +98,13 @@ export class TemplatesService {
     return toTemplateSummary(template);
   }
 
+  /**
+   * Loads a template detail record with tasks ordered by `orderIndex`.
+   *
+   * @param id - Template id from the route parameter.
+   * @returns The template detail DTO, including ordered tasks.
+   * @throws NotFoundException when the template id does not exist.
+   */
   async getTemplate(id: string): Promise<TemplateDetailDto> {
     const template = await this.prisma.template.findUnique({
       where: { id },
@@ -97,6 +123,16 @@ export class TemplatesService {
     return toTemplateDetail(template);
   }
 
+  /**
+   * Appends a new task to a template and assigns the next order index.
+   *
+   * @param templateId - Parent template id from the route parameter.
+   * @param input - Task creation payload from the request body.
+   * @returns The created task DTO with dependency ids.
+   * @throws NotFoundException when the template id does not exist.
+   * @throws BadRequestException when required text or estimated minutes are invalid.
+   * @throws ConflictException when the task violates a database uniqueness rule.
+   */
   async createTask(
     templateId: string,
     input: CreateTemplateTaskDto,
@@ -136,6 +172,17 @@ export class TemplatesService {
     }
   }
 
+  /**
+   * Applies a partial update to a task that belongs to the given template.
+   *
+   * @param templateId - Parent template id used to scope the task lookup.
+   * @param taskId - Task id from the nested route parameter.
+   * @param input - Partial task update payload.
+   * @returns The updated task DTO with dependency ids.
+   * @throws NotFoundException when the template or task cannot be found.
+   * @throws BadRequestException when supplied field values are invalid.
+   * @throws ConflictException when the update violates a database uniqueness rule.
+   */
   async updateTask(
     templateId: string,
     taskId: string,
@@ -180,6 +227,13 @@ export class TemplatesService {
     }
   }
 
+  /**
+   * Verifies a template exists before creating or mutating nested task records.
+   *
+   * @param templateId - Template id to look up.
+   * @returns Resolves when the template exists.
+   * @throws NotFoundException when the template id does not exist.
+   */
   private async ensureTemplateExists(templateId: string): Promise<void> {
     const template = await this.prisma.template.findUnique({
       where: { id: templateId },
@@ -192,6 +246,12 @@ export class TemplatesService {
   }
 }
 
+/**
+ * Maps Prisma template summaries into the shared API contract.
+ *
+ * @param template - Prisma template record including task count.
+ * @returns Shared template summary DTO.
+ */
 function toTemplateSummary(template: TemplateWithTaskCount): TemplateSummaryDto {
   return {
     id: template.id,
@@ -203,6 +263,12 @@ function toTemplateSummary(template: TemplateWithTaskCount): TemplateSummaryDto 
   };
 }
 
+/**
+ * Maps a Prisma template detail record into a contract-safe DTO.
+ *
+ * @param template - Prisma template detail record including tasks and dependencies.
+ * @returns Shared template detail DTO.
+ */
 function toTemplateDetail(template: TemplateDetailRecord): TemplateDetailDto {
   return {
     id: template.id,
@@ -214,6 +280,12 @@ function toTemplateDetail(template: TemplateDetailRecord): TemplateDetailDto {
   };
 }
 
+/**
+ * Converts task dependencies from relation records into a flat id list for clients.
+ *
+ * @param task - Prisma task record including dependency relation rows.
+ * @returns Shared template task DTO.
+ */
 function toTemplateTask(task: TemplateTaskWithDependencies): TemplateTaskDto {
   return {
     id: task.id,
@@ -229,6 +301,14 @@ function toTemplateTask(task: TemplateTaskWithDependencies): TemplateTaskDto {
   };
 }
 
+/**
+ * Trims required text fields and rejects empty values consistently.
+ *
+ * @param value - User-provided string to normalize.
+ * @param field - Field name used in the validation error message.
+ * @returns The trimmed non-empty string.
+ * @throws BadRequestException when the trimmed value is empty.
+ */
 function requiredText(value: string, field: string): string {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -238,6 +318,12 @@ function requiredText(value: string, field: string): string {
   return trimmed;
 }
 
+/**
+ * Normalizes omitted or whitespace-only text fields to null for database storage.
+ *
+ * @param value - Optional user-provided string.
+ * @returns Trimmed text, or null when omitted or blank.
+ */
 function optionalText(value: string | undefined): string | null {
   if (value === undefined) {
     return null;
@@ -247,6 +333,13 @@ function optionalText(value: string | undefined): string | null {
   return trimmed || null;
 }
 
+/**
+ * Normalizes optional minute estimates while rejecting negative or fractional values.
+ *
+ * @param value - Optional estimate in minutes.
+ * @returns A valid whole-minute estimate, or null when omitted.
+ * @throws BadRequestException when the value is negative or fractional.
+ */
 function optionalNumber(value: number | undefined): number | null {
   if (value === undefined || value === null) {
     return null;
@@ -259,6 +352,13 @@ function optionalNumber(value: number | undefined): number | null {
   return value;
 }
 
+/**
+ * Re-throws Prisma unique constraint failures as API-level conflicts.
+ *
+ * @param error - Unknown persistence error caught from Prisma.
+ * @returns Nothing when the error is not a Prisma unique violation.
+ * @throws ConflictException when Prisma reports a unique constraint violation.
+ */
 function throwConflictForUniqueViolation(error: unknown): void {
   if (
     typeof error === 'object' &&

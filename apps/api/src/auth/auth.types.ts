@@ -1,4 +1,8 @@
-/** User shape stored on authenticated requests and serialized into sessions. */
+/**
+ * User shape allowed to leave the authentication boundary.
+ *
+ * Password hashes and other credential material must never be added here.
+ */
 export type SafeUser = {
   id: string;
   email: string;
@@ -6,7 +10,9 @@ export type SafeUser = {
   createdAt: Date;
 };
 
-/** Express request shape after Passport session middleware has attached auth helpers. */
+/**
+ * Express request shape after Passport session middleware has attached auth helpers.
+ */
 export type AuthenticatedRequest = {
   user?: SafeUser;
   isAuthenticated?: () => boolean;

@@ -9,6 +9,12 @@ import { comparePassword, PASSWORD_COMPARE } from './password-compare';
 import { SessionAuthGuard } from './session-auth.guard';
 import { SessionSerializer } from './session.serializer';
 
+/**
+ * Authentication module for the single seeded operator account.
+ *
+ * It registers Passport session support, local credential validation, and the
+ * guards/serializer used by protected API endpoints.
+ */
 @Module({
   imports: [PrismaModule, PassportModule.register({ session: true })],
   controllers: [AuthController],

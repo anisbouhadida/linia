@@ -10,6 +10,10 @@ import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { TemplatesModule } from './templates/templates.module';
 
+/**
+ * Root Nest module that wires global configuration, validation, error handling,
+ * persistence, authentication, and the current MVP feature modules.
+ */
 @Module({
   imports: [
     ConfigModule.forRoot({
