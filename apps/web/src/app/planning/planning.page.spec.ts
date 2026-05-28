@@ -41,6 +41,12 @@ describe('PlanningPage', () => {
     dependsOn: [],
   };
 
+  const secondTemplate: TemplateSummaryDto = {
+    ...template,
+    id: 'template-2',
+    name: 'Cutover',
+  };
+
   beforeEach(async () => {
     planning = {
       listTemplates: vi.fn(),
@@ -172,6 +178,9 @@ describe('PlanningPage', () => {
     const title = fixture.nativeElement.querySelector(
       'input[formcontrolname="title"]',
     ) as HTMLInputElement;
+    const owner = fixture.nativeElement.querySelector(
+      'input[formcontrolname="owner"]',
+    ) as HTMLInputElement;
     const form = fixture.nativeElement.querySelector(
       '[data-testid="task-form"]',
     ) as HTMLFormElement;
@@ -180,6 +189,8 @@ describe('PlanningPage', () => {
     externalId.dispatchEvent(new Event('input'));
     title.value = 'Check database';
     title.dispatchEvent(new Event('input'));
+    owner.value = 'DBA';
+    owner.dispatchEvent(new Event('input'));
     form.dispatchEvent(new Event('submit'));
 
     await fixture.whenStable();
@@ -189,7 +200,7 @@ describe('PlanningPage', () => {
       externalId: 'T-001',
       title: 'Check database',
       description: '',
-      owner: '',
+      owner: 'DBA',
       estimatedMinutes: undefined,
       requiresEvidence: false,
     });
@@ -198,6 +209,98 @@ describe('PlanningPage', () => {
         'tbody input[type="text"]',
       ) as HTMLInputElement).value,
     ).toBe('Check database');
+  });
+
+  it('shows task validation feedback before creating a task', async () => {
+    planning.listTemplates.mockResolvedValue({
+      data: [template],
+      meta: { total: 1, nextCursor: null },
+    } satisfies ApiListResponse<TemplateSummaryDto>);
+    planning.getTemplate.mockResolvedValue({ ...template, tasks: [] });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="select-template"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const minutes = fixture.nativeElement.querySelector(
+      'input[formcontrolname="estimatedMinutes"]',
+    ) as HTMLInputElement;
+    const form = fixture.nativeElement.querySelector(
+      '[data-testid="task-form"]',
+    ) as HTMLFormElement;
+
+    minutes.value = '-1';
+    minutes.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(planning.createTask).not.toHaveBeenCalled();
+    expect(text).toContain('External ID is required');
+    expect(text).toContain('Task title is required');
+    expect(text).toContain('Owner is required');
+    expect(text).toContain('Minutes must be zero or greater');
+    expect(
+      (
+        fixture.nativeElement.querySelector(
+          'input[formcontrolname="externalId"]',
+        ) as HTMLInputElement
+      ).classList.contains('is-invalid'),
+    ).toBe(true);
+  });
+
+  it('clears task validation feedback when another template is selected', async () => {
+    planning.listTemplates.mockResolvedValue({
+      data: [template, secondTemplate],
+      meta: { total: 2, nextCursor: null },
+    } satisfies ApiListResponse<TemplateSummaryDto>);
+    planning.getTemplate
+      .mockResolvedValueOnce({ ...template, tasks: [] })
+      .mockResolvedValueOnce({ ...secondTemplate, tasks: [] });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const templateButtons = fixture.nativeElement.querySelectorAll(
+      '[data-testid="select-template"]',
+    ) as NodeListOf<HTMLButtonElement>;
+    templateButtons[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="task-form"]',
+      ) as HTMLFormElement
+    ).dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Owner is required');
+
+    templateButtons[1].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(planning.getTemplate).toHaveBeenLastCalledWith('template-2');
+    expect(fixture.nativeElement.textContent).not.toContain('Owner is required');
+    expect(
+      (
+        fixture.nativeElement.querySelector(
+          'input[formcontrolname="owner"]',
+        ) as HTMLInputElement
+      ).classList.contains('is-invalid'),
+    ).toBe(false);
   });
 
   it('shows an error state when templates fail to load', async () => {
@@ -282,6 +385,9 @@ describe('PlanningPage', () => {
     const title = fixture.nativeElement.querySelector(
       'input[formcontrolname="title"]',
     ) as HTMLInputElement;
+    const owner = fixture.nativeElement.querySelector(
+      'input[formcontrolname="owner"]',
+    ) as HTMLInputElement;
     const form = fixture.nativeElement.querySelector(
       '[data-testid="task-form"]',
     ) as HTMLFormElement;
@@ -290,6 +396,8 @@ describe('PlanningPage', () => {
     externalId.dispatchEvent(new Event('input'));
     title.value = 'Check database';
     title.dispatchEvent(new Event('input'));
+    owner.value = 'DBA';
+    owner.dispatchEvent(new Event('input'));
     form.dispatchEvent(new Event('submit'));
 
     await fixture.whenStable();

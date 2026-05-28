@@ -50,8 +50,8 @@ export class PlanningPage implements OnInit {
       externalId: ['', Validators.required],
       title: ['', Validators.required],
       description: [''],
-      owner: [''],
-      estimatedMinutes: [''],
+      owner: ['', Validators.required],
+      estimatedMinutes: ['', Validators.min(0)],
       requiresEvidence: [false],
     });
   }
@@ -103,6 +103,7 @@ export class PlanningPage implements OnInit {
       this.templates.update((templates) => [template, ...templates]);
       this.selectedTemplate.set({ ...template, tasks: [] });
       this.templateForm.reset({ name: '', description: '' });
+      this.resetTaskForm();
     } catch (error) {
       this.errorMessage.set(apiErrorMessage(error, 'Could not create template'));
     } finally {
@@ -122,6 +123,7 @@ export class PlanningPage implements OnInit {
 
     try {
       this.selectedTemplate.set(await this.planningService.getTemplate(templateId));
+      this.resetTaskForm();
     } catch (error) {
       this.errorMessage.set(
         apiErrorMessage(error, 'Could not load template details'),
@@ -159,14 +161,7 @@ export class PlanningPage implements OnInit {
         requiresEvidence: formValue.requiresEvidence,
       });
       this.appendTask(task);
-      this.taskForm.reset({
-        externalId: '',
-        title: '',
-        description: '',
-        owner: '',
-        estimatedMinutes: '',
-        requiresEvidence: false,
-      });
+      this.resetTaskForm();
     } catch (error) {
       this.errorMessage.set(apiErrorMessage(error, 'Could not create task'));
     } finally {
@@ -246,6 +241,20 @@ export class PlanningPage implements OnInit {
           }
         : template,
     );
+  }
+
+  /**
+   * Clears task-entry values and validation display for the selected template.
+   */
+  private resetTaskForm(): void {
+    this.taskForm.reset({
+      externalId: '',
+      title: '',
+      description: '',
+      owner: '',
+      estimatedMinutes: '',
+      requiresEvidence: false,
+    });
   }
 }
 

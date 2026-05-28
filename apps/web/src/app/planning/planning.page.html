@@ -1,14 +1,11 @@
 <section class="d-grid gap-4">
   <header class="border-bottom pb-3">
-    <p class="small text-body-secondary font-monospace text-uppercase mb-1">
-      Planning
-    </p>
+    <p class="small text-body-secondary font-monospace text-uppercase mb-1">Planning</p>
     <div class="d-flex flex-column flex-md-row gap-2 justify-content-between">
       <div>
         <h1 class="h4 mb-1">Template planning</h1>
         <p class="mb-0 text-body-secondary">
-          {{ templateCount() }} templates · {{ selectedTaskCount() }} selected
-          tasks
+          {{ templateCount() }} templates · {{ selectedTaskCount() }} selected tasks
         </p>
       </div>
       <button
@@ -43,28 +40,22 @@
               id="template-name"
               class="form-control"
               [class.is-invalid]="
-                templateForm.controls.name.touched &&
-                templateForm.controls.name.invalid
+                templateForm.controls.name.touched && templateForm.controls.name.invalid
               "
               type="text"
               formControlName="name"
-              placeholder="Core Migration"
+              placeholder="ex. Core Migration"
               required
               aria-describedby="template-name-feedback"
             />
-            @if (
-              templateForm.controls.name.touched &&
-              templateForm.controls.name.invalid
-            ) {
+            @if (templateForm.controls.name.touched && templateForm.controls.name.invalid) {
               <div id="template-name-feedback" class="invalid-feedback">
                 Template name is required
               </div>
             }
           </div>
           <div>
-            <label class="form-label" for="template-description">
-              Description
-            </label>
+            <label class="form-label" for="template-description"> Description </label>
             <textarea
               id="template-description"
               class="form-control"
@@ -72,11 +63,7 @@
               formControlName="description"
             ></textarea>
           </div>
-          <button
-            class="btn btn-primary"
-            type="submit"
-            [disabled]="templateSubmitting()"
-          >
+          <button class="btn btn-primary" type="submit" [disabled]="templateSubmitting()">
             <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
             Create template
           </button>
@@ -85,9 +72,7 @@
         @if (loadingTemplates()) {
           <div class="text-body-secondary">Loading templates...</div>
         } @else if (templates().length === 0) {
-          <div class="border rounded p-3 text-body-secondary">
-            No templates yet
-          </div>
+          <div class="border rounded p-3 text-body-secondary">No templates yet</div>
         } @else {
           <div class="list-group">
             @for (template of templates(); track template.id) {
@@ -135,36 +120,71 @@
             data-testid="task-form"
             [formGroup]="taskForm"
             (ngSubmit)="createTask()"
+            novalidate
           >
             <div class="col-12 col-md-3">
               <label class="form-label" for="task-external-id">External ID</label>
               <input
                 id="task-external-id"
                 class="form-control"
+                [class.is-invalid]="
+                  taskForm.controls.externalId.touched &&
+                  taskForm.controls.externalId.invalid
+                "
                 type="text"
                 formControlName="externalId"
                 placeholder="T-001"
+                required
+                aria-describedby="task-external-id-feedback"
               />
+              @if (
+                taskForm.controls.externalId.touched &&
+                taskForm.controls.externalId.invalid
+              ) {
+                <div id="task-external-id-feedback" class="invalid-feedback">
+                  External ID is required
+                </div>
+              }
             </div>
             <div class="col-12 col-md-5">
               <label class="form-label" for="task-title">Title</label>
               <input
                 id="task-title"
                 class="form-control"
+                [class.is-invalid]="
+                  taskForm.controls.title.touched && taskForm.controls.title.invalid
+                "
                 type="text"
                 formControlName="title"
                 placeholder="Check database"
+                required
+                aria-describedby="task-title-feedback"
               />
+              @if (taskForm.controls.title.touched && taskForm.controls.title.invalid) {
+                <div id="task-title-feedback" class="invalid-feedback">
+                  Task title is required
+                </div>
+              }
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label" for="task-owner">Owner</label>
               <input
                 id="task-owner"
                 class="form-control"
+                [class.is-invalid]="
+                  taskForm.controls.owner.touched && taskForm.controls.owner.invalid
+                "
                 type="text"
                 formControlName="owner"
                 placeholder="DBA"
+                required
+                aria-describedby="task-owner-feedback"
               />
+              @if (taskForm.controls.owner.touched && taskForm.controls.owner.invalid) {
+                <div id="task-owner-feedback" class="invalid-feedback">
+                  Owner is required
+                </div>
+              }
             </div>
             <div class="col-12 col-md-5">
               <label class="form-label" for="task-description">Description</label>
@@ -180,10 +200,23 @@
               <input
                 id="task-estimate"
                 class="form-control"
+                [class.is-invalid]="
+                  taskForm.controls.estimatedMinutes.touched &&
+                  taskForm.controls.estimatedMinutes.invalid
+                "
                 type="number"
                 min="0"
                 formControlName="estimatedMinutes"
+                aria-describedby="task-estimate-feedback"
               />
+              @if (
+                taskForm.controls.estimatedMinutes.touched &&
+                taskForm.controls.estimatedMinutes.invalid
+              ) {
+                <div id="task-estimate-feedback" class="invalid-feedback">
+                  Minutes must be zero or greater
+                </div>
+              }
             </div>
             <div class="col-12 col-md-2">
               <div class="form-check">
@@ -193,17 +226,11 @@
                   type="checkbox"
                   formControlName="requiresEvidence"
                 />
-                <label class="form-check-label" for="task-evidence">
-                  Evidence
-                </label>
+                <label class="form-check-label" for="task-evidence"> Evidence </label>
               </div>
             </div>
             <div class="col-12 col-md-2">
-              <button
-                class="btn btn-primary w-100"
-                type="submit"
-                [disabled]="taskSubmitting()"
-              >
+              <button class="btn btn-primary w-100" type="submit" [disabled]="taskSubmitting()">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
               </button>
             </div>
