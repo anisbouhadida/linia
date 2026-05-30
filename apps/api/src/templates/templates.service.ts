@@ -3,11 +3,14 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
   ApiListResponse,
+  CreateTemplateDependencyDto,
   CreateTemplateDto,
   CreateTemplateTaskDto,
+  TemplateDependencyDto,
   TemplateDetailDto,
   TemplateSummaryDto,
   TemplateTaskDto,
@@ -44,6 +47,13 @@ type TemplateDetailRecord = {
   createdAt: Date;
   updatedAt: Date;
   tasks: TemplateTaskWithDependencies[];
+};
+
+type TemplateDependencyRecord = {
+  id: string;
+  templateId: string;
+  taskId: string;
+  dependsOnTaskId: string;
 };
 
 /**
@@ -84,9 +94,7 @@ export class TemplatesService {
    * @returns The persisted template summary with an initial task count.
    * @throws BadRequestException when the name is blank after trimming.
    */
-  async createTemplate(
-    input: CreateTemplateDto,
-  ): Promise<TemplateSummaryDto> {
+  async createTemplate(input: CreateTemplateDto): Promise<TemplateSummaryDto> {
     const name = requiredText(input.name, 'name');
     const description = optionalText(input.description);
 
@@ -209,7 +217,8 @@ export class TemplatesService {
             input.description === undefined
               ? undefined
               : optionalText(input.description),
-          owner: input.owner === undefined ? undefined : optionalText(input.owner),
+          owner:
+            input.owner === undefined ? undefined : optionalText(input.owner),
           estimatedMinutes:
             input.estimatedMinutes === undefined
               ? undefined
@@ -223,6 +232,53 @@ export class TemplatesService {
       return toTemplateTask(task);
     } catch (error) {
       throwConflictForUniqueViolation(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a dependency between two tasks in the same template.
+   *
+   * @param templateId - Parent template id used to scope both tasks.
+   * @param input - Dependency creation payload.
+   * @returns Created dependency DTO.
+   * @throws NotFoundException when the template or either task cannot be found.
+   * @throws HttpException when the dependency is invalid.
+   * @throws ConflictException when the dependency already exists.
+   */
+  async createDependency(
+    templateId: string,
+    input: CreateTemplateDependencyDto,
+  ): Promise<TemplateDependencyDto> {
+    if (input.taskId === input.dependsOnTaskId) {
+      throwInvalidDependency('Task cannot depend on itself');
+    }
+
+    await this.ensureTemplateExists(templateId);
+    const tasks = await this.prisma.templateTask.findMany({
+      where: {
+        templateId,
+        id: { in: [input.taskId, input.dependsOnTaskId] },
+      },
+      select: { id: true },
+    });
+    const taskIds = new Set(tasks.map((task) => task.id));
+    if (!taskIds.has(input.taskId) || !taskIds.has(input.dependsOnTaskId)) {
+      throw new NotFoundException('Task not found');
+    }
+
+    try {
+      const dependency = await this.prisma.templateDependency.create({
+        data: {
+          templateId,
+          taskId: input.taskId,
+          dependsOnTaskId: input.dependsOnTaskId,
+        },
+      });
+
+      return toTemplateDependency(dependency);
+    } catch (error) {
+      throwConflictForUniqueViolation(error, 'Dependency already exists');
       throw error;
     }
   }
@@ -252,7 +308,9 @@ export class TemplatesService {
  * @param template - Prisma template record including task count.
  * @returns Shared template summary DTO.
  */
-function toTemplateSummary(template: TemplateWithTaskCount): TemplateSummaryDto {
+function toTemplateSummary(
+  template: TemplateWithTaskCount,
+): TemplateSummaryDto {
   return {
     id: template.id,
     name: template.name,
@@ -297,7 +355,20 @@ function toTemplateTask(task: TemplateTaskWithDependencies): TemplateTaskDto {
     estimatedMinutes: task.estimatedMinutes,
     orderIndex: task.orderIndex,
     requiresEvidence: task.requiresEvidence,
-    dependsOn: task.dependencies.map((dependency) => dependency.dependsOnTaskId),
+    dependsOn: task.dependencies.map(
+      (dependency) => dependency.dependsOnTaskId,
+    ),
+  };
+}
+
+function toTemplateDependency(
+  dependency: TemplateDependencyRecord,
+): TemplateDependencyDto {
+  return {
+    id: dependency.id,
+    templateId: dependency.templateId,
+    taskId: dependency.taskId,
+    dependsOnTaskId: dependency.dependsOnTaskId,
   };
 }
 
@@ -346,7 +417,9 @@ function optionalNumber(value: number | undefined): number | null {
   }
 
   if (!Number.isInteger(value) || value < 0) {
-    throw new BadRequestException('estimatedMinutes must be a positive integer');
+    throw new BadRequestException(
+      'estimatedMinutes must be a positive integer',
+    );
   }
 
   return value;
@@ -359,13 +432,24 @@ function optionalNumber(value: number | undefined): number | null {
  * @returns Nothing when the error is not a Prisma unique violation.
  * @throws ConflictException when Prisma reports a unique constraint violation.
  */
-function throwConflictForUniqueViolation(error: unknown): void {
+function throwConflictForUniqueViolation(
+  error: unknown,
+  message = 'Template task already exists',
+): void {
   if (
     typeof error === 'object' &&
     error !== null &&
     'code' in error &&
     error.code === 'P2002'
   ) {
-    throw new ConflictException('Template task already exists');
+    throw new ConflictException(message);
   }
+}
+
+function throwInvalidDependency(message: string): never {
+  throw new UnprocessableEntityException({
+    code: 'INVALID_DEPENDENCY',
+    message,
+    details: [{ message }],
+  });
 }

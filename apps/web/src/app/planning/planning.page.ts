@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type {
+  ImportedTemplateSummaryDto,
   TemplateDetailDto,
   TemplateSummaryDto,
   TemplateTaskDto,
@@ -27,15 +28,15 @@ export class PlanningPage implements OnInit {
   readonly loadingTemplates = signal(true);
   readonly loadingTemplate = signal(false);
   readonly templateSubmitting = signal(false);
+  readonly csvImportSubmitting = signal(false);
   readonly taskSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly templateCount = computed(() => this.templates().length);
-  readonly selectedTaskCount = computed(
-    () => this.selectedTemplate()?.tasks.length ?? 0,
-  );
+  readonly selectedTaskCount = computed(() => this.selectedTemplate()?.tasks.length ?? 0);
 
   readonly templateForm;
+  readonly csvImportForm;
   readonly taskForm;
 
   constructor(
@@ -45,6 +46,11 @@ export class PlanningPage implements OnInit {
     this.templateForm = formBuilder.nonNullable.group({
       name: ['', Validators.required],
       description: [''],
+    });
+    this.csvImportForm = formBuilder.nonNullable.group({
+      importTemplateName: ['', Validators.required],
+      description: [''],
+      csv: ['', Validators.required],
     });
     this.taskForm = formBuilder.nonNullable.group({
       externalId: ['', Validators.required],
@@ -97,9 +103,7 @@ export class PlanningPage implements OnInit {
     this.errorMessage.set(null);
 
     try {
-      const template = await this.planningService.createTemplate(
-        this.templateForm.getRawValue(),
-      );
+      const template = await this.planningService.createTemplate(this.templateForm.getRawValue());
       this.templates.update((templates) => [template, ...templates]);
       this.selectedTemplate.set({ ...template, tasks: [] });
       this.templateForm.reset({ name: '', description: '' });
@@ -108,6 +112,44 @@ export class PlanningPage implements OnInit {
       this.errorMessage.set(apiErrorMessage(error, 'Could not create template'));
     } finally {
       this.templateSubmitting.set(false);
+    }
+  }
+
+  /**
+   * Imports a template from pasted CSV text and selects the created template.
+   *
+   * @returns Resolves after the import submit attempt finishes.
+   */
+  async importCsvText(): Promise<void> {
+    if (this.csvImportForm.invalid || this.csvImportSubmitting()) {
+      this.csvImportForm.markAllAsTouched();
+      return;
+    }
+
+    this.csvImportSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    const formValue = this.csvImportForm.getRawValue();
+
+    try {
+      const result = await this.planningService.importCsvText({
+        templateName: formValue.importTemplateName,
+        description: formValue.description,
+        csv: formValue.csv,
+      });
+      const summary = toTemplateSummary(result.template);
+      this.templates.update((templates) => [summary, ...templates]);
+      this.selectedTemplate.set(await this.planningService.getTemplate(summary.id));
+      this.csvImportForm.reset({
+        importTemplateName: '',
+        description: '',
+        csv: '',
+      });
+      this.resetTaskForm();
+    } catch (error) {
+      this.errorMessage.set(apiErrorMessage(error, 'Could not import CSV'));
+    } finally {
+      this.csvImportSubmitting.set(false);
     }
   }
 
@@ -125,9 +167,7 @@ export class PlanningPage implements OnInit {
       this.selectedTemplate.set(await this.planningService.getTemplate(templateId));
       this.resetTaskForm();
     } catch (error) {
-      this.errorMessage.set(
-        apiErrorMessage(error, 'Could not load template details'),
-      );
+      this.errorMessage.set(apiErrorMessage(error, 'Could not load template details'));
     } finally {
       this.loadingTemplate.set(false);
     }
@@ -196,15 +236,40 @@ export class PlanningPage implements OnInit {
           : target.value;
 
     try {
-      const updatedTask = await this.planningService.updateTask(
-        template.id,
-        task.id,
-        { [field]: value },
-      );
+      const updatedTask = await this.planningService.updateTask(template.id, task.id, {
+        [field]: value,
+      });
       this.replaceTask(updatedTask);
     } catch (error) {
       this.errorMessage.set(apiErrorMessage(error, 'Could not update task'));
     }
+  }
+
+  /**
+   * Resolves dependency ids to user-facing external ids for task table labels.
+   *
+   * @param task - Task whose predecessor labels should be displayed.
+   * @returns External ids when available, otherwise raw dependency ids.
+   */
+  dependencyLabels(task: TemplateTaskDto): string[] {
+    const tasksById = new Map(
+      (this.selectedTemplate()?.tasks ?? []).map((templateTask) => [
+        templateTask.id,
+        templateTask.externalId,
+      ]),
+    );
+
+    return task.dependsOn.map((dependencyId) => tasksById.get(dependencyId) ?? dependencyId);
+  }
+
+  /**
+   * Whether a template task has planning-time predecessor constraints.
+   *
+   * @param task - Task row rendered in the planning table.
+   * @returns True when the task is locked behind another task.
+   */
+  isLocked(task: TemplateTaskDto): boolean {
+    return task.dependsOn.length > 0;
   }
 
   /**
@@ -271,4 +336,15 @@ function parseOptionalInteger(value: string): number | undefined {
 
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function toTemplateSummary(importedTemplate: ImportedTemplateSummaryDto): TemplateSummaryDto {
+  return {
+    id: importedTemplate.id,
+    name: importedTemplate.name,
+    description: importedTemplate.description,
+    taskCount: importedTemplate.taskCount,
+    createdAt: importedTemplate.createdAt,
+    updatedAt: importedTemplate.updatedAt,
+  };
 }

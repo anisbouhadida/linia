@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CsvImportService } from './csv-import.service';
 import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
 
@@ -7,6 +8,6 @@ import { TemplatesService } from './templates.service';
  */
 @Module({
   controllers: [TemplatesController],
-  providers: [TemplatesService],
+  providers: [TemplatesService, CsvImportService],
 })
 export class TemplatesModule {}

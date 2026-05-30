@@ -38,6 +38,13 @@ type TemplateTaskRecord = {
   dependencies: { dependsOnTaskId: string }[];
 };
 
+type TemplateDependencyRecord = {
+  id: string;
+  templateId: string;
+  taskId: string;
+  dependsOnTaskId: string;
+};
+
 describe('Planning workflow (e2e)', () => {
   let app: INestApplication<App>;
   let AppModule: typeof import('./../src/app.module').AppModule;
@@ -62,6 +69,7 @@ describe('Planning workflow (e2e)', () => {
     const passwordHash = await bcrypt.hash('change-me', 4);
     const templates: TemplateRecord[] = [];
     const tasks: TemplateTaskRecord[] = [];
+    const dependencies: TemplateDependencyRecord[] = [];
 
     const prisma = {
       user: {
@@ -127,6 +135,14 @@ describe('Planning workflow (e2e)', () => {
             ...template,
             tasks: tasks
               .filter((task) => task.templateId === template.id)
+              .map((task) => ({
+                ...task,
+                dependencies: dependencies
+                  .filter((dependency) => dependency.taskId === task.id)
+                  .map((dependency) => ({
+                    dependsOnTaskId: dependency.dependsOnTaskId,
+                  })),
+              }))
               .sort((left, right) => left.orderIndex - right.orderIndex),
           });
         }),
@@ -162,6 +178,37 @@ describe('Planning workflow (e2e)', () => {
 
           return Promise.resolve(task);
         }),
+        findMany: jest.fn(({ where }) =>
+          Promise.resolve(
+            tasks
+              .filter(
+                (task) =>
+                  task.templateId === where.templateId &&
+                  where.id.in.includes(task.id),
+              )
+              .map((task) => ({ id: task.id })),
+          ),
+        ),
+        createManyAndReturn: jest.fn(({ data }) => {
+          const createdTasks = data.map((taskData: TemplateTaskRecord) => {
+            const task = {
+              id: `task-${tasks.length + 1}`,
+              templateId: taskData.templateId,
+              externalId: taskData.externalId,
+              title: taskData.title,
+              description: taskData.description,
+              owner: taskData.owner,
+              estimatedMinutes: taskData.estimatedMinutes,
+              orderIndex: taskData.orderIndex,
+              requiresEvidence: taskData.requiresEvidence,
+              dependencies: [],
+            };
+            tasks.push(task);
+            return { id: task.id, externalId: task.externalId };
+          });
+
+          return Promise.resolve(createdTasks);
+        }),
         findFirst: jest.fn(({ where }) =>
           Promise.resolve(
             tasks.find(
@@ -186,6 +233,41 @@ describe('Planning workflow (e2e)', () => {
           return Promise.resolve(task);
         }),
       },
+      templateDependency: {
+        create: jest.fn(({ data }) => {
+          if (
+            dependencies.some(
+              (dependency) =>
+                dependency.taskId === data.taskId &&
+                dependency.dependsOnTaskId === data.dependsOnTaskId,
+            )
+          ) {
+            return Promise.reject({ code: 'P2002' });
+          }
+
+          const dependency = {
+            id: `dependency-${dependencies.length + 1}`,
+            templateId: data.templateId,
+            taskId: data.taskId,
+            dependsOnTaskId: data.dependsOnTaskId,
+          };
+          dependencies.push(dependency);
+          return Promise.resolve(dependency);
+        }),
+        createMany: jest.fn(({ data }) => {
+          for (const dependency of data) {
+            dependencies.push({
+              id: `dependency-${dependencies.length + 1}`,
+              templateId: dependency.templateId,
+              taskId: dependency.taskId,
+              dependsOnTaskId: dependency.dependsOnTaskId,
+            });
+          }
+
+          return Promise.resolve({ count: data.length });
+        }),
+      },
+      $transaction: jest.fn((callback) => callback(prisma)),
       $queryRaw: jest.fn(),
     };
 
@@ -198,6 +280,12 @@ describe('Planning workflow (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     configureSessionAuth(app, {
+      get: (key: string, defaultValue?: string) => {
+        if (key === 'NODE_ENV') {
+          return defaultValue ?? 'test';
+        }
+        return defaultValue;
+      },
       getOrThrow: (key: string) => {
         if (key === 'SESSION_SECRET') {
           return 'test-session-secret';
@@ -263,7 +351,6 @@ describe('Planning workflow (e2e)', () => {
           'Confirm primary and replica connectivity before migration.',
         owner: 'DBA',
         estimatedMinutes: 15,
-        orderIndex: 7,
         requiresEvidence: true,
       })
       .expect(201);
@@ -307,5 +394,131 @@ describe('Planning workflow (e2e)', () => {
           }),
         ]);
       });
+  });
+
+  it('imports a CSV template and dependency through the planning API', async () => {
+    const agent = request.agent(app.getHttpAdapter().getInstance());
+
+    await agent
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'change-me' })
+      .expect(201);
+
+    const importResponse = await agent
+      .post('/templates/import-csv-text')
+      .send({
+        templateName: 'Database Migration Cutover',
+        description: 'Imported plan',
+        csv: [
+          'externalId,title,description,owner,estimatedMinutes,requiresEvidence,dependsOn',
+          'T-001,Check database,,DBA,15,true,',
+          'T-002,Run migration,,SYS_ADMIN,45,false,T-001',
+        ].join('\n'),
+      })
+      .expect(201);
+
+    expect(importResponse.body.data).toEqual({
+      template: {
+        id: 'template-1',
+        name: 'Database Migration Cutover',
+        description: 'Imported plan',
+        taskCount: 2,
+        dependencyCount: 1,
+        createdAt: '2026-05-25T11:00:00.000Z',
+        updatedAt: '2026-05-25T11:00:00.000Z',
+      },
+    });
+
+    await agent
+      .get('/templates/template-1')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.data.tasks).toEqual([
+          expect.objectContaining({
+            id: 'task-1',
+            externalId: 'T-001',
+            dependsOn: [],
+          }),
+          expect.objectContaining({
+            id: 'task-2',
+            externalId: 'T-002',
+            dependsOn: ['task-1'],
+          }),
+        ]);
+      });
+  });
+
+  it('creates a template dependency through the planning API', async () => {
+    const agent = request.agent(app.getHttpAdapter().getInstance());
+
+    await agent
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'change-me' })
+      .expect(201);
+
+    const createTemplateResponse = await agent
+      .post('/templates')
+      .send({ name: 'Database Migration Cutover' })
+      .expect(201);
+    const template = createTemplateResponse.body.data;
+
+    const firstTaskResponse = await agent
+      .post(`/templates/${template.id}/tasks`)
+      .send({
+        externalId: 'T-001',
+        title: 'Check database connectivity',
+        requiresEvidence: false,
+      })
+      .expect(201);
+    const secondTaskResponse = await agent
+      .post(`/templates/${template.id}/tasks`)
+      .send({
+        externalId: 'T-002',
+        title: 'Run migration',
+        requiresEvidence: false,
+      })
+      .expect(201);
+
+    await agent
+      .post(`/templates/${template.id}/dependencies`)
+      .send({
+        taskId: secondTaskResponse.body.data.id,
+        dependsOnTaskId: firstTaskResponse.body.data.id,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body.data).toEqual({
+          id: 'dependency-1',
+          templateId: template.id,
+          taskId: secondTaskResponse.body.data.id,
+          dependsOnTaskId: firstTaskResponse.body.data.id,
+        });
+      });
+
+    await agent
+      .get(`/templates/${template.id}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.data.tasks[1]).toMatchObject({
+          id: secondTaskResponse.body.data.id,
+          dependsOn: [firstTaskResponse.body.data.id],
+        });
+      });
+
+    await agent
+      .post(`/templates/${template.id}/dependencies`)
+      .send({
+        taskId: secondTaskResponse.body.data.id,
+        dependsOnTaskId: firstTaskResponse.body.data.id,
+      })
+      .expect(409);
+
+    await agent
+      .post(`/templates/${template.id}/dependencies`)
+      .send({
+        taskId: firstTaskResponse.body.data.id,
+        dependsOnTaskId: firstTaskResponse.body.data.id,
+      })
+      .expect(422);
   });
 });

@@ -69,6 +69,69 @@
           </button>
         </form>
 
+        <form
+          class="d-grid gap-2 border-top pt-3"
+          data-testid="csv-import-form"
+          [formGroup]="csvImportForm"
+          (ngSubmit)="importCsvText()"
+        >
+          <h3 class="h6 mb-0">Import CSV</h3>
+          <div>
+            <label class="form-label" for="csv-template-name">Name</label>
+            <input
+              id="csv-template-name"
+              class="form-control"
+              [class.is-invalid]="
+                csvImportForm.controls.importTemplateName.touched &&
+                csvImportForm.controls.importTemplateName.invalid
+              "
+              type="text"
+              formControlName="importTemplateName"
+              placeholder="ex. Core Migration"
+              required
+              aria-describedby="csv-template-name-feedback"
+            />
+            @if (
+              csvImportForm.controls.importTemplateName.touched &&
+              csvImportForm.controls.importTemplateName.invalid
+            ) {
+              <div id="csv-template-name-feedback" class="invalid-feedback">
+                Template name is required
+              </div>
+            }
+          </div>
+          <div>
+            <label class="form-label" for="csv-template-description"> Description </label>
+            <input
+              id="csv-template-description"
+              class="form-control"
+              type="text"
+              formControlName="description"
+            />
+          </div>
+          <div>
+            <label class="form-label" for="csv-import-text">CSV text</label>
+            <textarea
+              id="csv-import-text"
+              class="form-control font-monospace"
+              [class.is-invalid]="
+                csvImportForm.controls.csv.touched && csvImportForm.controls.csv.invalid
+              "
+              rows="6"
+              formControlName="csv"
+              required
+              aria-describedby="csv-import-text-feedback"
+            ></textarea>
+            @if (csvImportForm.controls.csv.touched && csvImportForm.controls.csv.invalid) {
+              <div id="csv-import-text-feedback" class="invalid-feedback">CSV text is required</div>
+            }
+          </div>
+          <button class="btn btn-primary" type="submit" [disabled]="csvImportSubmitting()">
+            <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>
+            Import CSV
+          </button>
+        </form>
+
         @if (loadingTemplates()) {
           <div class="text-body-secondary">Loading templates...</div>
         } @else if (templates().length === 0) {
@@ -128,8 +191,7 @@
                 id="task-external-id"
                 class="form-control"
                 [class.is-invalid]="
-                  taskForm.controls.externalId.touched &&
-                  taskForm.controls.externalId.invalid
+                  taskForm.controls.externalId.touched && taskForm.controls.externalId.invalid
                 "
                 type="text"
                 formControlName="externalId"
@@ -137,10 +199,7 @@
                 required
                 aria-describedby="task-external-id-feedback"
               />
-              @if (
-                taskForm.controls.externalId.touched &&
-                taskForm.controls.externalId.invalid
-              ) {
+              @if (taskForm.controls.externalId.touched && taskForm.controls.externalId.invalid) {
                 <div id="task-external-id-feedback" class="invalid-feedback">
                   External ID is required
                 </div>
@@ -161,9 +220,7 @@
                 aria-describedby="task-title-feedback"
               />
               @if (taskForm.controls.title.touched && taskForm.controls.title.invalid) {
-                <div id="task-title-feedback" class="invalid-feedback">
-                  Task title is required
-                </div>
+                <div id="task-title-feedback" class="invalid-feedback">Task title is required</div>
               }
             </div>
             <div class="col-12 col-md-4">
@@ -181,9 +238,7 @@
                 aria-describedby="task-owner-feedback"
               />
               @if (taskForm.controls.owner.touched && taskForm.controls.owner.invalid) {
-                <div id="task-owner-feedback" class="invalid-feedback">
-                  Owner is required
-                </div>
+                <div id="task-owner-feedback" class="invalid-feedback">Owner is required</div>
               }
             </div>
             <div class="col-12 col-md-5">
@@ -248,6 +303,7 @@
                     <th scope="col">Owner</th>
                     <th scope="col">Minutes</th>
                     <th scope="col">Evidence</th>
+                    <th scope="col">Dependencies</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -286,6 +342,20 @@
                           [checked]="task.requiresEvidence"
                           (change)="updateTask(task, 'requiresEvidence', $event)"
                         />
+                      </td>
+                      <td>
+                        @if (isLocked(task)) {
+                          <div class="d-flex flex-wrap gap-1">
+                            <span class="badge text-bg-warning">Locked</span>
+                            @for (dependency of dependencyLabels(task); track dependency) {
+                              <span class="badge text-bg-secondary">
+                                Depends on {{ dependency }}
+                              </span>
+                            }
+                          </div>
+                        } @else {
+                          <span class="text-body-secondary small">Ready</span>
+                        }
                       </td>
                     </tr>
                   }

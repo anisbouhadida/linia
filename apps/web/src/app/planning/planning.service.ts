@@ -5,6 +5,8 @@ import type {
   ApiListResponse,
   CreateTemplateDto,
   CreateTemplateTaskDto,
+  ImportTemplateCsvResultDto,
+  ImportTemplateCsvTextDto,
   TemplateDetailDto,
   TemplateSummaryDto,
   TemplateTaskDto,
@@ -28,9 +30,7 @@ export class PlanningService {
    * @returns List envelope containing template summaries and pagination metadata.
    */
   listTemplates(): Promise<ApiListResponse<TemplateSummaryDto>> {
-    return firstValueFrom(
-      this.http.get<ApiListResponse<TemplateSummaryDto>>('/templates'),
-    );
+    return firstValueFrom(this.http.get<ApiListResponse<TemplateSummaryDto>>('/templates'));
   }
 
   /**
@@ -39,13 +39,24 @@ export class PlanningService {
    * @param template - Template creation payload from the planning form.
    * @returns Created template summary.
    */
-  async createTemplate(
-    template: CreateTemplateDto,
-  ): Promise<TemplateSummaryDto> {
+  async createTemplate(template: CreateTemplateDto): Promise<TemplateSummaryDto> {
     const response = await firstValueFrom(
-      this.http.post<ApiDataResponse<TemplateSummaryDto>>(
-        '/templates',
-        template,
+      this.http.post<ApiDataResponse<TemplateSummaryDto>>('/templates', template),
+    );
+    return response.data;
+  }
+
+  /**
+   * Imports a template from CSV text sent as JSON.
+   *
+   * @param importBody - Template name and raw CSV text from the import form.
+   * @returns Imported template summary payload.
+   */
+  async importCsvText(importBody: ImportTemplateCsvTextDto): Promise<ImportTemplateCsvResultDto> {
+    const response = await firstValueFrom(
+      this.http.post<ApiDataResponse<ImportTemplateCsvResultDto>>(
+        '/templates/import-csv-text',
+        importBody,
       ),
     );
     return response.data;
@@ -59,9 +70,7 @@ export class PlanningService {
    */
   async getTemplate(templateId: string): Promise<TemplateDetailDto> {
     const response = await firstValueFrom(
-      this.http.get<ApiDataResponse<TemplateDetailDto>>(
-        `/templates/${templateId}`,
-      ),
+      this.http.get<ApiDataResponse<TemplateDetailDto>>(`/templates/${templateId}`),
     );
     return response.data;
   }
@@ -73,15 +82,9 @@ export class PlanningService {
    * @param task - Task creation payload from the task form.
    * @returns Created template task.
    */
-  async createTask(
-    templateId: string,
-    task: CreateTemplateTaskDto,
-  ): Promise<TemplateTaskDto> {
+  async createTask(templateId: string, task: CreateTemplateTaskDto): Promise<TemplateTaskDto> {
     const response = await firstValueFrom(
-      this.http.post<ApiDataResponse<TemplateTaskDto>>(
-        `/templates/${templateId}/tasks`,
-        task,
-      ),
+      this.http.post<ApiDataResponse<TemplateTaskDto>>(`/templates/${templateId}/tasks`, task),
     );
     return response.data;
   }

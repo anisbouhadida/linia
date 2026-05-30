@@ -10,14 +10,19 @@ import {
 import type {
   ApiDataResponse,
   ApiListResponse,
+  ImportTemplateCsvResultDto,
+  TemplateDependencyDto,
   TemplateDetailDto,
   TemplateSummaryDto,
   TemplateTaskDto,
 } from '@linia/shared';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { CsvImportService } from './csv-import.service';
 import {
+  CreateTemplateDependencyBody,
   CreateTemplateBody,
   CreateTemplateTaskBody,
+  ImportTemplateCsvTextBody,
   UpdateTemplateTaskBody,
 } from './templates.dto';
 import { TemplatesService } from './templates.service';
@@ -32,7 +37,10 @@ import { TemplatesService } from './templates.service';
 @UseGuards(SessionAuthGuard)
 @Controller('templates')
 export class TemplatesController {
-  constructor(private readonly templatesService: TemplatesService) {}
+  constructor(
+    private readonly templatesService: TemplatesService,
+    private readonly csvImportService: CsvImportService,
+  ) {}
 
   /**
    * Lists template summaries in most-recently-updated order.
@@ -55,6 +63,19 @@ export class TemplatesController {
     @Body() body: CreateTemplateBody,
   ): Promise<ApiDataResponse<TemplateSummaryDto>> {
     return { data: await this.templatesService.createTemplate(body) };
+  }
+
+  /**
+   * Imports a template and task rows from CSV text sent inside JSON.
+   *
+   * @param body - Validated CSV import request body.
+   * @returns Data envelope containing the imported template summary.
+   */
+  @Post('import-csv-text')
+  async importCsvText(
+    @Body() body: ImportTemplateCsvTextBody,
+  ): Promise<ApiDataResponse<ImportTemplateCsvResultDto>> {
+    return { data: await this.csvImportService.importCsvText(body) };
   }
 
   /**
@@ -101,6 +122,23 @@ export class TemplatesController {
   ): Promise<ApiDataResponse<TemplateTaskDto>> {
     return {
       data: await this.templatesService.updateTask(templateId, taskId, body),
+    };
+  }
+
+  /**
+   * Creates a dependency edge between two tasks in the selected template.
+   *
+   * @param templateId - Parent template id from the route parameter.
+   * @param body - Validated dependency creation request body.
+   * @returns Data envelope containing the created dependency.
+   */
+  @Post(':templateId/dependencies')
+  async createDependency(
+    @Param('templateId') templateId: string,
+    @Body() body: CreateTemplateDependencyBody,
+  ): Promise<ApiDataResponse<TemplateDependencyDto>> {
+    return {
+      data: await this.templatesService.createDependency(templateId, body),
     };
   }
 }

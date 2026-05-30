@@ -114,10 +114,10 @@ Strict exclusions:
 
 ### Week 4 — CSV Text Import
 
-- [ ] Create `csv-import.service.ts` on the backend.
-- [ ] Support CSV text input, not uploaded files.
-- [ ] Add endpoint: `POST /templates/import-csv-text`.
-- [ ] Accept payload shape similar to:
+- [X] Create `csv-import.service.ts` on the backend.
+- [X] Support CSV text input, not uploaded files.
+- [X] Add endpoint: `POST /templates/import-csv-text`.
+- [X] Accept payload shape similar to:
 
 ```json
 {
@@ -126,78 +126,78 @@ Strict exclusions:
 }
 ````
 
-- [ ] Parse required CSV fields:
+- [X] Parse required CSV fields:
 
-  - [ ] `externalId`
-  - [ ] `title`
-  - [ ] `dependsOn`
-- [ ] Parse optional CSV fields:
+  - [X] `externalId`
+  - [X] `title`
+  - [X] `dependsOn`
+- [X] Parse optional CSV fields:
 
-  - [ ] `description`
-  - [ ] `owner`
-  - [ ] `estimatedMinutes`
-  - [ ] `requiresEvidence`
-- [ ] Validate unique `externalId`.
-- [ ] Validate `dependsOn` references existing `externalId`.
-- [ ] Return clear validation errors.
-- [ ] Add Angular CSV import UI using a textarea.
+  - [X] `description`
+  - [X] `owner`
+  - [X] `estimatedMinutes`
+  - [X] `requiresEvidence`
+- [X] Validate unique `externalId`.
+- [X] Validate `dependsOn` references existing `externalId`.
+- [X] Return clear validation errors.
+- [X] Add Angular CSV import UI using a textarea.
 - [ ] Optional: add a browser-side file picker that reads CSV locally and sends text as JSON.
 
 **Acceptance criteria:**
 
-- [ ] User can paste CSV text into Angular.
-- [ ] Backend creates a template and tasks from CSV text.
-- [ ] Invalid dependencies are rejected.
-- [ ] No backend file-upload infrastructure is added.
+- [X] User can paste CSV text into Angular.
+- [X] Backend creates a template and tasks from CSV text.
+- [X] Invalid dependencies are rejected.
+- [X] No backend file-upload infrastructure is added.
 
 ---
 
 ### Week 5 — Dependency Engine
 
-- [ ] Implement `dependency-engine.service.ts` in NestJS.
-- [ ] Add dependency calculation for:
+- [X] Implement `dependency-engine.service.ts` in NestJS.
+- [X] Add dependency calculation for:
 
-  - [ ] `READY`
-  - [ ] `BLOCKED`
-  - [ ] `IN_PROGRESS`
-  - [ ] `COMPLETED`
-  - [ ] `FAILED`
-- [ ] Implement rule: a task is `READY` when all dependencies are `COMPLETED`.
-- [ ] Implement rule: a task is `BLOCKED` when at least one dependency is not `COMPLETED`.
-- [ ] Implement rule: a `FAILED` predecessor does not unlock downstream tasks.
-- [ ] Add unit tests for dependency calculations.
-- [ ] Add tests for tasks with no dependencies.
-- [ ] Add tests for tasks with incomplete dependencies.
-- [ ] Add tests for tasks unlocking after predecessor completion.
+  - [X] `READY`
+  - [X] `BLOCKED`
+  - [X] `IN_PROGRESS`
+  - [X] `COMPLETED`
+  - [X] `FAILED`
+- [X] Implement rule: a task is `READY` when all dependencies are `COMPLETED`.
+- [X] Implement rule: a task is `BLOCKED` when at least one dependency is not `COMPLETED`.
+- [X] Implement rule: a `FAILED` predecessor does not unlock downstream tasks.
+- [X] Add unit tests for dependency calculations.
+- [X] Add tests for tasks with no dependencies.
+- [X] Add tests for tasks with incomplete dependencies.
+- [X] Add tests for tasks unlocking after predecessor completion.
 
 **Acceptance criteria:**
 
-- [ ] Dependency engine tests pass.
-- [ ] Backend can determine if a task can start.
-- [ ] Backend can identify blocking tasks.
-- [ ] Dependency logic is not implemented only in Angular.
+- [X] Dependency engine tests pass.
+- [X] Backend can determine if a task can start.
+- [X] Backend can identify blocking tasks.
+- [X] Dependency logic is not implemented only in Angular.
 
 ---
 
 ### Week 6 — Template Dependencies and UI Lock Display
 
-- [ ] Add `TemplateDependency` to the Prisma schema.
-- [ ] Add migration for template dependencies.
-- [ ] Add backend endpoint to create dependencies between template tasks.
-- [ ] Add backend validation to prevent invalid dependencies.
-- [ ] Prevent self-dependencies.
-- [ ] Prevent duplicate dependencies.
-- [ ] Update CSV import to create dependencies.
-- [ ] Update Angular planning UI to show dependency relationships.
-- [ ] Visually display tasks that are locked behind other tasks.
-- [ ] Add simple dependency labels such as `Depends on T-001`.
+- [X] Add `TemplateDependency` to the Prisma schema.
+- [X] Add migration for template dependencies.
+- [X] Add backend endpoint to create dependencies between template tasks.
+- [X] Add backend validation to prevent invalid dependencies.
+- [X] Prevent self-dependencies.
+- [X] Prevent duplicate dependencies.
+- [X] Update CSV import to create dependencies.
+- [X] Update Angular planning UI to show dependency relationships.
+- [X] Visually display tasks that are locked behind other tasks.
+- [X] Add simple dependency labels such as `Depends on T-001`.
 
 **Acceptance criteria:**
 
-- [ ] Dependencies are persisted in PostgreSQL.
-- [ ] CSV import creates dependencies correctly.
-- [ ] Invalid dependencies are rejected server-side.
-- [ ] Planning UI clearly shows task dependencies.
+- [X] Dependencies are persisted in PostgreSQL.
+- [X] CSV import creates dependencies correctly.
+- [X] Invalid dependencies are rejected server-side.
+- [X] Planning UI clearly shows task dependencies.
 
 ---
 
