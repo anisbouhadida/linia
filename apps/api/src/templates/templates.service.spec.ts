@@ -1,4 +1,9 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { TemplatesService } from './templates.service';
 
 describe('TemplatesService', () => {
@@ -177,5 +182,107 @@ describe('TemplatesService', () => {
         requiresEvidence: false,
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('creates a dependency between tasks in the same template', async () => {
+    const prisma = {
+      template: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'template-1' }),
+      },
+      templateTask: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'task-1', templateId: 'template-1' },
+          { id: 'task-2', templateId: 'template-1' },
+        ]),
+      },
+      templateDependency: {
+        create: jest.fn().mockResolvedValue({
+          id: 'dependency-1',
+          templateId: 'template-1',
+          taskId: 'task-2',
+          dependsOnTaskId: 'task-1',
+        }),
+      },
+    };
+    const service = new TemplatesService(prisma);
+
+    await expect(
+      service.createDependency('template-1', {
+        taskId: 'task-2',
+        dependsOnTaskId: 'task-1',
+      }),
+    ).resolves.toEqual({
+      id: 'dependency-1',
+      templateId: 'template-1',
+      taskId: 'task-2',
+      dependsOnTaskId: 'task-1',
+    });
+
+    expect(prisma.templateDependency.create).toHaveBeenCalledWith({
+      data: {
+        templateId: 'template-1',
+        taskId: 'task-2',
+        dependsOnTaskId: 'task-1',
+      },
+    });
+  });
+
+  it('rejects dependencies when either task is outside the template', async () => {
+    const prisma = {
+      template: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'template-1' }),
+      },
+      templateTask: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'task-1' }]),
+      },
+      templateDependency: { create: jest.fn() },
+    };
+    const service = new TemplatesService(prisma);
+
+    await expect(
+      service.createDependency('template-1', {
+        taskId: 'task-2',
+        dependsOnTaskId: 'task-1',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects self-dependencies', async () => {
+    const service = new TemplatesService({
+      template: { findUnique: jest.fn() },
+      templateTask: { findMany: jest.fn() },
+      templateDependency: { create: jest.fn() },
+    });
+
+    await expect(
+      service.createDependency('template-1', {
+        taskId: 'task-1',
+        dependsOnTaskId: 'task-1',
+      }),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+
+  it('rejects duplicate dependencies', async () => {
+    const prisma = {
+      template: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'template-1' }),
+      },
+      templateTask: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'task-1' }, { id: 'task-2' }]),
+      },
+      templateDependency: {
+        create: jest.fn().mockRejectedValue({ code: 'P2002' }),
+      },
+    };
+    const service = new TemplatesService(prisma);
+
+    await expect(
+      service.createDependency('template-1', {
+        taskId: 'task-2',
+        dependsOnTaskId: 'task-1',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 });

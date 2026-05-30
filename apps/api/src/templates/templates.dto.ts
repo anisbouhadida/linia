@@ -8,8 +8,10 @@ import {
   MinLength,
 } from 'class-validator';
 import type {
+  CreateTemplateDependencyDto,
   CreateTemplateDto,
   CreateTemplateTaskDto,
+  ImportTemplateCsvTextDto,
   UpdateTemplateTaskDto,
 } from '@linia/shared';
 
@@ -26,6 +28,26 @@ export class CreateTemplateBody implements CreateTemplateDto {
   @IsOptional()
   @IsString()
   description?: string;
+}
+
+/**
+ * Validated request body for importing a template from pasted CSV text.
+ */
+export class ImportTemplateCsvTextBody implements ImportTemplateCsvTextDto {
+  /** User-visible template name for the imported checklist. */
+  @IsString()
+  @MinLength(1)
+  templateName!: string;
+
+  /** Optional operator-facing context for the imported checklist. */
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  /** Raw CSV text sent inside JSON; backend file uploads are intentionally excluded. */
+  @IsString()
+  @MinLength(1)
+  csv!: string;
 }
 
 /**
@@ -102,4 +124,19 @@ export class UpdateTemplateTaskBody implements UpdateTemplateTaskDto {
   @IsOptional()
   @IsBoolean()
   requiresEvidence?: boolean;
+}
+
+/**
+ * Validated request body for creating a dependency between two template tasks.
+ */
+export class CreateTemplateDependencyBody implements CreateTemplateDependencyDto {
+  /** Dependent task that will be blocked until its predecessor completes. */
+  @IsString()
+  @MinLength(1)
+  taskId!: string;
+
+  /** Predecessor task that must complete first in launched runs. */
+  @IsString()
+  @MinLength(1)
+  dependsOnTaskId!: string;
 }

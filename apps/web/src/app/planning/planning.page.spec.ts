@@ -14,6 +14,7 @@ describe('PlanningPage', () => {
   let planning: {
     listTemplates: ReturnType<typeof vi.fn>;
     createTemplate: ReturnType<typeof vi.fn>;
+    importCsvText: ReturnType<typeof vi.fn>;
     getTemplate: ReturnType<typeof vi.fn>;
     createTask: ReturnType<typeof vi.fn>;
     updateTask: ReturnType<typeof vi.fn>;
@@ -41,6 +42,14 @@ describe('PlanningPage', () => {
     dependsOn: [],
   };
 
+  const dependentTask: TemplateTaskDto = {
+    ...task,
+    id: 'task-2',
+    externalId: 'T-002',
+    title: 'Run migration',
+    dependsOn: ['task-1'],
+  };
+
   const secondTemplate: TemplateSummaryDto = {
     ...template,
     id: 'template-2',
@@ -51,6 +60,7 @@ describe('PlanningPage', () => {
     planning = {
       listTemplates: vi.fn(),
       createTemplate: vi.fn(),
+      importCsvText: vi.fn(),
       getTemplate: vi.fn(),
       createTask: vi.fn(),
       updateTask: vi.fn(),
@@ -118,9 +128,52 @@ describe('PlanningPage', () => {
     fixture.detectChanges();
 
     expect(planning.createTemplate).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain(
-      'Template name is required',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Template name is required');
+  });
+
+  it('imports CSV text and selects the imported template', async () => {
+    planning.importCsvText.mockResolvedValue({
+      template: {
+        ...template,
+        taskCount: 1,
+        dependencyCount: 0,
+      },
+    });
+    planning.getTemplate.mockResolvedValue({ ...template, tasks: [task] });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const name = fixture.nativeElement.querySelector(
+      'input[formcontrolname="importTemplateName"]',
+    ) as HTMLInputElement;
+    const csv = fixture.nativeElement.querySelector(
+      'textarea[formcontrolname="csv"]',
+    ) as HTMLTextAreaElement;
+    const form = fixture.nativeElement.querySelector(
+      '[data-testid="csv-import-form"]',
+    ) as HTMLFormElement;
+
+    name.value = 'Core Migration';
+    name.dispatchEvent(new Event('input'));
+    csv.value = 'externalId,title,dependsOn\nT-001,Check database,';
+    csv.dispatchEvent(new Event('input'));
+    form.dispatchEvent(new Event('submit'));
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(planning.importCsvText).toHaveBeenCalledWith({
+      templateName: 'Core Migration',
+      description: '',
+      csv: 'externalId,title,dependsOn\nT-001,Check database,',
+    });
+    expect(planning.getTemplate).toHaveBeenCalledWith('template-1');
+    expect(fixture.nativeElement.textContent).toContain('Core Migration');
+    expect(
+      (fixture.nativeElement.querySelector('tbody input[type="text"]') as HTMLInputElement).value,
+    ).toBe('Check database');
   });
 
   it('loads a selected template with tasks', async () => {
@@ -147,10 +200,33 @@ describe('PlanningPage', () => {
 
     expect(planning.getTemplate).toHaveBeenCalledWith('template-1');
     expect(
-      (fixture.nativeElement.querySelector(
-        'tbody input[type="text"]',
-      ) as HTMLInputElement).value,
+      (fixture.nativeElement.querySelector('tbody input[type="text"]') as HTMLInputElement).value,
     ).toBe('Check database');
+  });
+
+  it('shows dependency labels for locked template tasks', async () => {
+    planning.listTemplates.mockResolvedValue({
+      data: [template],
+      meta: { total: 1, nextCursor: null },
+    } satisfies ApiListResponse<TemplateSummaryDto>);
+    planning.getTemplate.mockResolvedValue({
+      ...template,
+      tasks: [task, dependentTask],
+    } satisfies TemplateDetailDto);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="select-template"]') as HTMLButtonElement
+    ).click();
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Depends on T-001');
+    expect(fixture.nativeElement.textContent).toContain('Locked');
   });
 
   it('adds a task to the selected template', async () => {
@@ -165,9 +241,7 @@ describe('PlanningPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="select-template"]',
-      ) as HTMLButtonElement
+      fixture.nativeElement.querySelector('[data-testid="select-template"]') as HTMLButtonElement
     ).click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -205,9 +279,7 @@ describe('PlanningPage', () => {
       requiresEvidence: false,
     });
     expect(
-      (fixture.nativeElement.querySelector(
-        'tbody input[type="text"]',
-      ) as HTMLInputElement).value,
+      (fixture.nativeElement.querySelector('tbody input[type="text"]') as HTMLInputElement).value,
     ).toBe('Check database');
   });
 
@@ -222,9 +294,7 @@ describe('PlanningPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="select-template"]',
-      ) as HTMLButtonElement
+      fixture.nativeElement.querySelector('[data-testid="select-template"]') as HTMLButtonElement
     ).click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -279,9 +349,7 @@ describe('PlanningPage', () => {
     fixture.detectChanges();
 
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="task-form"]',
-      ) as HTMLFormElement
+      fixture.nativeElement.querySelector('[data-testid="task-form"]') as HTMLFormElement
     ).dispatchEvent(new Event('submit'));
     await fixture.whenStable();
     fixture.detectChanges();
@@ -296,9 +364,7 @@ describe('PlanningPage', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Owner is required');
     expect(
       (
-        fixture.nativeElement.querySelector(
-          'input[formcontrolname="owner"]',
-        ) as HTMLInputElement
+        fixture.nativeElement.querySelector('input[formcontrolname="owner"]') as HTMLInputElement
       ).classList.contains('is-invalid'),
     ).toBe(false);
   });
@@ -310,9 +376,7 @@ describe('PlanningPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'Could not load templates',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Could not load templates');
   });
 
   it('shows backend validation details when template creation fails', async () => {
@@ -372,9 +436,7 @@ describe('PlanningPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="select-template"]',
-      ) as HTMLButtonElement
+      fixture.nativeElement.querySelector('[data-testid="select-template"]') as HTMLButtonElement
     ).click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -403,8 +465,6 @@ describe('PlanningPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'Task external ID already exists',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Task external ID already exists');
   });
 });

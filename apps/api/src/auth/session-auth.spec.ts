@@ -7,9 +7,12 @@ import { PrismaService } from '../database/prisma.service';
 
 jest.mock('express-session', () => {
   const sessionMiddleware = jest.fn();
-  return Object.assign(jest.fn(() => sessionMiddleware), {
-    Store: class Store {},
-  });
+  return Object.assign(
+    jest.fn(() => sessionMiddleware),
+    {
+      Store: class Store {},
+    },
+  );
 });
 
 jest.mock('passport', () => ({
@@ -52,6 +55,9 @@ describe('configureSessionAuth', () => {
         }
         throw new Error('Unexpected provider');
       }),
+      getHttpAdapter: jest.fn(() => ({
+        getInstance: jest.fn(() => ({ set: jest.fn() })),
+      })),
       use: jest.fn(),
     } as unknown as INestApplication;
     const configService = createConfigService({
@@ -65,7 +71,9 @@ describe('configureSessionAuth', () => {
 
     expect(session).toHaveBeenCalledWith(
       expect.objectContaining({
-        store: expect.any((session as unknown as { Store: new () => unknown }).Store),
+        store: expect.any(
+          (session as unknown as { Store: new () => unknown }).Store,
+        ),
       }),
     );
   });

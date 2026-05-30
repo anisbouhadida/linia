@@ -1,12 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type {
   ApiDataResponse,
   ApiListResponse,
+  ImportTemplateCsvResultDto,
   TemplateDetailDto,
   TemplateSummaryDto,
   TemplateTaskDto,
@@ -113,5 +111,29 @@ describe('PlanningService', () => {
     request.flush({ data: task } satisfies ApiDataResponse<TemplateTaskDto>);
 
     await expect(promise).resolves.toEqual(task);
+  });
+
+  it('imports a template from CSV text', async () => {
+    const result: ImportTemplateCsvResultDto = {
+      template: {
+        ...template,
+        taskCount: 2,
+        dependencyCount: 1,
+      },
+    };
+    const promise = service.importCsvText({
+      templateName: 'Core Migration',
+      csv: 'externalId,title,dependsOn\nT-001,Check database,',
+    });
+
+    const request = http.expectOne('/templates/import-csv-text');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      templateName: 'Core Migration',
+      csv: 'externalId,title,dependsOn\nT-001,Check database,',
+    });
+    request.flush({ data: result } satisfies ApiDataResponse<ImportTemplateCsvResultDto>);
+
+    await expect(promise).resolves.toEqual(result);
   });
 });
